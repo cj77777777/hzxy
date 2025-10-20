@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>湖州学院学生手册模考系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "PingFang SC", "Microsoft YaHei", sans-serif; }
+        body { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); color: #333; line-height: 1.6; min-height: 100vh; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); overflow: hidden; }
+        header { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 25px; text-align: center; position: relative; }
+        header h1 { font-size: 1.8rem; margin-bottom: 10px; }
+        .logo { position: absolute; top: 15px; left: 20px; width: 40px; height: 40px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .content { padding: 25px; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05); padding: 25px; margin-bottom: 25px; border: 1px solid #f0f0f0; }
+        .card-title { font-size: 1.4rem; color: #1e3c72; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #f0f0f0; }
+        .btn { display: inline-block; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; border: none; padding: 12px 25px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s; text-align: center; width: 100%; margin: 8px 0; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(30, 60, 114, 0.3); }
+        .btn-secondary { background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); }
+        .btn-success { background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%); }
+        .btn-warning { background: linear-gradient(135deg, #f46b45 0%, #eea849 100%); }
+        .btn-danger { background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%); }
+        .btn-small { padding: 8px 15px; font-size: 0.9rem; width: auto; margin: 5px; }
+        .stats { display: flex; justify-content: space-between; margin-top: 20px; }
+        .stat-item { text-align: center; flex: 1; padding: 15px; }
+        .stat-value { font-size: 2rem; font-weight: bold; margin-bottom: 5px; }
+        .correct { color: #00b09b; }
+        .wrong { color: #ff416c; }
+        .unanswered { color: #6c757d; }
+        .question { font-size: 1.1rem; margin-bottom: 20px; line-height: 1.6; }
+        .options { margin: 20px 0; }
+        .option { display: flex; align-items: flex-start; padding: 15px; margin-bottom: 10px; background: #f8f9fa; border-radius: 8px; cursor: pointer; transition: all 0.2s; border: 2px solid transparent; }
+        .option:hover { background: #e9ecef; }
+        .option.selected { background: #e3f2fd; border-color: #2196f3; }
+        .option.correct-answer { background: #d4edda; border-color: #28a745; }
+        .option.wrong-answer { background: #f8d7da; border-color: #dc3545; }
+        .option input { margin-right: 12px; margin-top: 3px; }
+        .feedback { margin-top: 15px; padding: 12px; border-radius: 8px; font-weight: 500; }
+        .feedback.correct { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
+        .feedback.wrong { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
+        .timer { font-size: 1.2rem; font-weight: bold; color: #1e3c72; text-align: center; padding: 10px; background: #f0f5ff; border-radius: 8px; margin-bottom: 20px; }
+        .score { font-size: 3rem; font-weight: bold; color: #1e3c72; margin: 15px 0; }
+        .rate { font-size: 1.2rem; color: #666; margin-bottom: 10px; }
+        .module-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; margin-top: 20px; }
+        .module-card { background: white; border-radius: 10px; padding: 20px; text-align: center; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); transition: all 0.3s; border: 2px solid #f0f0f0; cursor: pointer; }
+        .module-card:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1); border-color: #1e3c72; }
+        .error-item { background: #fff5f5; border-radius: 10px; padding: 20px; margin-bottom: 20px; border-left: 4px solid #ff416c; }
+        .error-question { font-weight: bold; margin-bottom: 15px; }
+        .error-answer, .correct-answer { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .error-answer { background: #ffeaea; }
+        .correct-answer { background: #e8f5e9; }
+        .record-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #f8f9fa; border-radius: 8px; margin-bottom: 10px; }
+        .hidden { display: none; }
+        .page { animation: fadeIn 0.5s ease; }
+        .check-btn { background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%); color: white; border: none; padding: 10px 20px; border-radius: 6px; font-size: 0.95rem; cursor: pointer; transition: all 0.3s; margin-top: 15px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @media (max-width: 600px) {
+            .container { border-radius: 10px; }
+            header { padding: 20px 15px; }
+            header h1 { font-size: 1.5rem; }
+            .content { padding: 20px 15px; }
+            .card { padding: 20px; }
+            .module-grid { grid-template-columns: 1fr; }
+            .stats { flex-direction: column; }
+            .stat-item { margin-bottom: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">湖</div>
+            <h1>湖州学院学生手册模考系统</h1>
+        </header>
+        
+        <div class="content">
+            <!-- 首页 -->
+            <div id="homePage" class="page">
+                <div class="card">
+                    <h2 class="card-title">欢迎使用学生手册模考系统</h2>
+                    <p>本系统包含229道学生手册题目，涵盖学籍管理、奖助政策、考试纪律和日常管理四大模块。</p>
+                    
+                    <button class="btn" onclick="startExam()">开始模拟考试 (100题80单20多)</button>
+                    <button class="btn btn-secondary" onclick="showPage('modulePage')">模块专项练习</button>
+                    <button class="btn btn-success" onclick="showPage('errorPage')">错题本</button>
+                    <button class="btn btn-warning" onclick="showPage('recordPage')">成绩记录</button>
+                    
+                    <div class="stats">
+                        <div class="stat-item"><div class="stat-value">229</div><div class="stat-label">总题数</div></div>
+                        <div class="stat-item"><div class="stat-value">4</div><div class="stat-label">模块数</div></div>
+                        <div class="stat-item"><div class="stat-value">60</div><div class="stat-label">考试时间(分钟)</div></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 模块选择页 -->
+            <div id="modulePage" class="page hidden">
+                <div class="card">
+                    <h2 class="card-title">选择练习模块</h2>
+                    <p>请选择您想要练习的模块，每个模块包含不同类型的题目。</p>
+                    
+                    <div class="module-grid">
+                        <div class="module-card" onclick="startModulePractice('学籍管理')"><div>📚</div><div>学籍管理</div><div>95题</div></div>
+                        <div class="module-card" onclick="startModulePractice('奖助政策')"><div>🏆</div><div>奖助政策</div><div>52题</div></div>
+                        <div class="module-card" onclick="startModulePractice('考试纪律')"><div>📝</div><div>考试纪律</div><div>40题</div></div>
+                        <div class="module-card" onclick="startModulePractice('日常管理')"><div>🏢</div><div>日常管理</div><div>42题</div></div>
+                    </div>
+                    
+                    <button class="btn btn-danger" onclick="showPage('homePage')">返回首页</button>
+                </div>
+            </div>
+            
+            <!-- 答题页 -->
+            <div id="examPage" class="page hidden">
+                <div class="card">
+                    <div class="timer" id="timer">60:00</div>
+                    <div class="question" id="question">题目加载中...</div>
+                    <div class="options" id="options"></div>
+                    
+                    <button id="checkBtn" class="check-btn hidden" onclick="checkAnswer()">检查答案</button>
+                    <div id="feedback" class="feedback hidden"></div>
+                    
+                    <div style="display: flex; justify-content: space-between; margin-top: 25px;">
+                        <button class="btn btn-small" onclick="prevQuestion()">上一题</button>
+                        <button class="btn btn-small" id="markBtn" onclick="toggleMark()">标记此题</button>
+                        <button class="btn btn-small" onclick="nextQuestion()">下一题</button>
+                    </div>
+                    
+                    <button class="btn btn-warning" onclick="submitExam()">提交试卷</button>
+                    <button class="btn btn-danger" onclick="showPage('homePage')">返回首页</button>
+                </div>
+            </div>
+            
+            <!-- 结果页 -->
+            <div id="resultPage" class="page hidden">
+                <div class="card">
+                    <div style="text-align: center; margin: 20px 0;">
+                        <h2 class="card-title" id="resultTitle">模拟考试结果</h2>
+                        <div class="score" id="score">0/50</div>
+                        <div class="rate" id="correctRate">正确率: 0%</div>
+                        <div class="rate" id="timeUsed">用时: 0分钟</div>
+                    </div>
+                    
+                    <div class="stats">
+                        <div class="stat-item"><div class="stat-value correct" id="correctCount">0</div><div class="stat-label">做对</div></div>
+                        <div class="stat-item"><div class="stat-value wrong" id="wrongCount">0</div><div class="stat-label">做错</div></div>
+                        <div class="stat-item"><div class="stat-value unanswered" id="unansweredCount">0</div><div class="stat-label">未答</div></div>
+                    </div>
+                    
+                    <button class="btn" onclick="reviewErrors()">查看错题</button>
+                    <button class="btn btn-secondary" onclick="restartExam()">重新考试</button>
+                    <button class="btn btn-danger" onclick="showPage('homePage')">返回首页</button>
+                </div>
+            </div>
+            
+            <!-- 错题本 -->
+            <div id="errorPage" class="page hidden">
+                <div class="card">
+                    <h2 class="card-title">错题本</h2>
+                    <p>这里记录了您之前做错的题目，可以随时查看和复习。</p>
+                    <div id="errorList"></div>
+                    <button class="btn btn-danger" onclick="showPage('homePage')">返回首页</button>
+                </div>
+            </div>
+            
+            <!-- 成绩记录 -->
+            <div id="recordPage" class="page hidden">
+                <div class="card">
+                    <h2 class="card-title">成绩记录</h2>
+                    <p>这里记录了您历次模拟考试的成绩。</p>
+                    <div id="recordList"></div>
+                    <button class="btn btn-danger" onclick="showPage('homePage')">返回首页</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 题库数据 - 只保留部分题目作为示例
+        const questionBank = {
+            "学籍管理": [
+                { type: "single", question: "1. 本科各专业实行弹性学制。四年制本科专业最长学习年限为( )。", options: ["A.4年", "B.5年", "C.6年", "D.7年"], answer: "C" },
+                { type: "single", question: "2. 学生根据教务处规定的时间进行选课。课程一经选定，一般不得随意更改。确因选择不当的，必须在开学后( )内申请另选。", options: ["A.1周", "B.2周", "C.3周", "D.4周"], answer: "A" },
+                { type: "single", question: "3. 学生因病或其他特殊原因不能参加学习(包括政治学习)、劳动、军训或其他由学校统一组织的活动时，应事先办理请假手续。病假应有校门诊部或指定医院证明。事假应有适当证明，从严掌握。如有特殊情况确实无法办理请假手续者，须在自事发之日起( )天内补办请假手续。凡不办理请假手续或未经批准而缺课以及补假逾期办理者，按旷课处理。", options: ["A.2天", "B.3天", "C.4天", "D.5天"], answer: "B" },
+                { type: "single", question: "4. 学生请假，应事先填写请假单，( )签署意见。", options: ["A.班长", "B.副班长", "C.班主任", "D.辅导员"], answer: "C" },
+                { type: "single", question: "5. 缺旷课1天及以上的，每天按( )计算。1天以内按实际缺课课时计算。", options: ["A.二课时", "B.四课时", "C.六课时", "D.八课时"], answer: "C" },
+                { type: "single", question: "6. 学生每学期考核不及格的课程给予一次补考机会。补考不及格者或补考缺考者，相应课程必须重修。补考均于下一学期自开学之日起( )内进行，一律凭学生证进场参加补考。", options: ["A.1周", "B.2周", "C.3周", "D.4周"], answer: "B" },
+                { type: "single", question: "7. 学生因特殊原因不能参加考核，应事先填写缓考申请表向所在二级学院申请缓考。经所在二级学院院长批准并报教务处备案后方可缓考，否则作旷考处理。缓考应从严控制。缓考课程考试在下一学期自开学之日起( )内进行。缓考成绩按正常考核评定。凡旷考者，该课程的成绩以零分计，并不准参加正常补考。缓考旷考者、缓考成绩不合格者，相应课程必须重修。", options: ["A.1周", "B.2周", "C.3周", "D.4周"], answer: "B" },
+                { type: "multiple", question: "8. 学业成绩优良、自学能力强或重修修读课程上课时间冲突者，由学生本人提出申请，经任课教师同意，学生所在二级学院院长审核批准，可以免听整门课程或课程的一部分。转专业或转学学生补修的课程因时间冲突可以申请免听。免听学生可以申请免交该门课程或课程部分的作业，但需做实验、参加课程考核。下列课程不得申请免听：( )", options: ["A.政治理论课", "B.体育课", "C.实验课", "D.军事训练", "E.各类实习、课程设计、毕业论文(设计)等必修的实践环节"], answer: ["A","B","C","D","E"] },
+                { type: "single", question: "9. 学生一学期缺旷课累计达到或超过某门课程教学时数的( ),或作业、实验报告累计缺交达( )者，不得参加本课程的考核，应予重修。", options: ["A.1/2、1/2", "B.1/3、1/3", "C.1/4、1/4", "D.1/5、1/5"], answer: "B" },
+                { type: "multiple", question: "10. 学生有下列情况之一者，应予休学：( )", options: ["A.因病经指定医院诊断，须停课治疗、休养时间占一学期总学时1/3以上者", "B.根据考勤，一学期请假、缺课超过该学期总学时1/3者", "C.因创业需要，本人申请休学者", "D.因其他特殊原因，本人申请或学校认为必须休学者"], answer: ["A","B","C","D"] },
+                { type: "single", question: "11. 学生休学一般以( )为限，修业时间与休学时间合计不得超过最长修业年限。休学日期以休学批准之日算起。", options: ["A.半年", "B.1年", "C.2年", "D.3年"], answer: "B" },
+                { type: "single", question: "12. 在校学生应征入伍参加中国人民解放军 (含中国人民武装警察部队),可保留学籍至( )，保留学籍期间不计入在校学习年限。学生参加学校组织的跨校联合培养项目，在联合培养学校学习期间，学校同时为其保留学籍。", options: ["A.退役后半年", "B.退役后1年", "C.退役后2年", "D.退役后3年"], answer: "C" },
+                { type: "single", question: "13. 学生在一学期中，不及格课程学分数达到该学期所修读课程学分( )及以上的，予以退学警示(毕业实习、毕业论文(设计)、选课与结课考核不在同一学期的课程、单独组班的辅修课程、之前已经获得学分的课程、与课程成绩挂钩的省级及以上统考课程的学分数不统计在内)。", options: ["A.1/2", "B.1/3", "C.1/4", "D.1/5"], answer: "A" },
+                { type: "single", question: "14. 学生在校期间需重修课程累计达( )学分及以上的，应予退学。", options: ["A.10", "B.20", "C.30", "D.40"], answer: "B" },
+                { type: "single", question: "15. 未履行请假手续连续( )未参加学校规定的教学活动的, 应予退学。", options: ["A.1周", "B.2周", "C.3周", "D.4周"], answer: "B" },
+                { type: "single", question: "16. 退学预警（红牌预警)还需重修学分累计( )(含）以上的，应予退学。", options: ["A.10学分", "B.12学分", "C.14学分", "D.16学分"], answer: "D" },
+                { type: "single", question: "17. 学生在标准学制年限内，未修完所学专业培养方案和指导性教学计划规定的全部内容，学分制管理的学生所获得的学分数达到或超过规定总学分数的( )者，可以结业离校，发给结业证书，也可以申请延长学制。", options: ["A.60%", "B.70%", "C.80%", "D.90%"], answer: "D" },
+                { type: "single", question: "18. 学生未取得学分的课程和教学环节，可在结业后最长修业年限内每个学期开学前后各( )内提出申请，返校重修。", options: ["A.1周", "B.2周", "C.3周", "D.4周"], answer: "A" },
+                { type: "single", question: "19. 本科生因毕业论文(设计)不及格而结业者。( )内可申请补做毕业论文(设计),经批准后参加下届毕业生的毕业论文(设计)答辩，及格者换发毕业证书，补做毕业论文(设计)不及格者不得再申请补做。", options: ["A.1年", "B.2年", "C.3年", "D.4年"], answer: "A" },
+                { type: "multiple", question: "20. 本科毕业生，具备下列( )条件者，可授予学士学位：", options: ["A.拥护中国共产党的领导，拥护社会主义制度，愿意为社会主义建设事业服务，遵纪守法，品行端正", "B.在学校规定学习年限内，修满专业培养方案和指导性教学计划规定的各类学分，较好地掌握本门学科的基本理论、专业知识和基本技能，经审核准予毕业。通过毕业论文(设计)审查，遵守学术道德和学术规范", "C.初步具有从事科学研究工作或者承担专业工作的能力", "D.每门学位课程修读成绩70分以上"], answer: ["A","B","C","D"] },
+                { type: "single", question: "21. 必修课累计有( )以上是经重修后才合格的，一般不授予学士学位。", options: ["A.10学分", "B.15学分", "C.20学分", "D.25学分"], answer: "D" },
+                { type: "single", question: "22. 有学位课程未达到( )的；一般不授予学士学位。", options: ["A.50分", "B.60分", "C.70分", "D.80分"], answer: "C" },
+                { type: "single", question: "23. 大学英语Ⅱ为学位课程的非外语专业学生因大学英语Ⅱ学位课程修读成绩未达70分的，但( )非艺术、体育类专业学生参加全国大学英语等级考试达( )以上者，艺术、体育类专业学生参加浙江省大学英语三级达60分以上者，可直接认定英语学位课程符合要求，修读俄语、日语等其它语种的，参照执行。", options: ["A.在修读年限内，435分", "B.在校期间，425分", "C.在修读年限内，425分", "D.在校期间，435分"], answer: "B" },
+                { type: "single", question: "24. 当年因结业未授予学士学位者，结业后一学年内经重修达到毕业条件换发毕业证书，符合本细则学位授予条件的，可随下一届毕业生申请补授学士学位。申请补授学士学位仅限( ),逾期不再补授。学生不允许同时应用第七与第八条款申请授予学士学位。", options: ["A.1次", "B.2次", "C.3次", "D.4次"], answer: "A" },
+                { type: "multiple", question: "25. 政治思想表现优良、未受过警告及以上处分的全校在籍全日制( )本科生都可以申请转专业。", options: ["A.一年级", "B.二年级", "C.三年级", "D.四年级"], answer: ["A","B"] },
+                { type: "multiple", question: "26. 学生有下列情形之一者，不予转专业：( )", options: ["A.身体条件不符合申请转入专业的体检标准者", "B.由定向招生、单考单招录取者", "C.美术类、音乐类、体育类专业学生申请转入其他类别专业者", "D.已经转过专业者", "E.教育部和浙江省教育厅相关文件中规定不可转专业者"], answer: ["A","B","C","D","E"] },
+                { type: "single", question: "27. 符合转专业条件的本科一年级学生第一学期累积平均学分绩点列全班前( )者，可以直接申请转入相关专业(省级以上重点、优势、特色、一流等专业除外),免笔试考核。", options: ["A.5%", "B.10%", "C.15%", "D.20%"], answer: "A" },
+                { type: "single", question: "28. 《体育与健康》课程不能跨年级选修，除重修、补修外，学生只能选修( )本学期与本年级相对应的体育选项课程。", options: ["A.一门", "B.二门", "C.三门", "D.四门"], answer: "A" },
+                { type: "single", question: "29. 学生按规定申请办理选课有关手续后，跟班听课，并参加期末考试。如重修时间与正常教学时间相冲突，无法听课，学生可根据本人对重修课程的掌握程度申请该课程的理论部分免听课(不得申请免听的课程详见《湖州学院学生学籍管理实施细则》相关规定)。免听课须经( )同意，并报开课学院批准。", options: ["A.班长", "B.副班长", "C.班主任", "D.任课教师"], answer: "D" },
+                { type: "single", question: "30. 凡累计补考不及格人数达( )及以上的课程，应视情况开设重修课程班，由开课学院组织重修。需要开设重修班的课程，应在安排下学期教学任务时由开课学院排定。重修班实际授课学时不少于该课程计划学时的50%,教学任务需在第14周前完成，第15周进行考核。", options: ["A.5人", "B.10人", "C.15人", "D.20人"], answer: "C" },
+                { type: "single", question: "31. 每学期期末，学生根据开课情况进行重修报名。学生每人、每学期重修课程数原则上不超过( )，参加重修的学生须填写\"课程重修申请表\"。", options: ["A.1门", "B.2门", "C.3门", "D.4门"], answer: "B" },
+                { type: "multiple", question: "32. 学籍预警分为一般预警(黄牌预警)、退学预警(红牌预警)二个等级。一般预警对象的适用条件：( )", options: ["A.一个学期补考三门(含)以上者", "B.还需重修学分累计8学分(含)以上者", "C.一学期内因累计旷课时数达到15课时(含)以上受到严重警告及以上处分者", "D.突发性情绪波动显著、沉溺于网络或其他原因影响正常学习、生活者"], answer: ["A","B","C","D"] },
+                { type: "multiple", question: "33. 学籍预警分为一般预警(黄牌预警)、退学预警(红牌预警)二个等级。退学预警对象的适用条件：( )", options: ["A.还需重修学分累计16学分(含)以上者", "B.一学期内因累计旷课时数达到25学时(含)以上受到记过及以上处分者", "C.因其他违纪原因受到记过及其以上处分的学生", "D.在校学习时间近6年(含休学),难以完成学业的"], answer: ["A","B","C","D"] },
+                { type: "multiple", question: "34. 团委组织管理与实施的竞赛有：( )", options: ["A.\"挑战杯\"大学生创业计划大赛", "B.\"挑战杯\"大学生课外学术科技作品竞赛", "C.\"浙江省大学生艺术节\"竞赛", "D.\"中国国际大学生创新大赛\""], answer: ["A","B","C"] },
+                { type: "single", question: "35. 完成专业培养方案和指导性教学计划规定的课程学分与课外学分方能毕业。培养方案规定的课程总学分中( )为收费课程学分，其余为非收费课程学分。", options: ["A.120学分", "B.140学分", "C.160学分", "D.180学分"], answer: "C" },
+                { type: "single", question: "36. 成绩异议处理。每学期学生应及时登录教务管理系统认真核对课程成绩，有异议的需在规定时间内进行反馈处理。对期末成绩有异议的，须在新学期开学后( )内联系所在二级学院教学办进行书面反馈，二级学院教学办按规定予以受理并联系任课教师进行核实，学生本人不得接触试卷。", options: ["A.1周", "B.2周", "C.3周", "D.4周"], answer: "B" },
+                { type: "multiple", question: "37. 学生进入校内实习(实训)场所前须认真预习，明确实习(实训)活动的( )，了解可能存在的安全风险，提前做好安全防范准备。", options: ["A.目的", "B.原理", "C.步骤", "D.方式"], answer: ["A","B","C"] },
+                { type: "single", question: "38. 学生进入实习(实训)场所必须自觉服从管理，严格遵守操作规程。在实习(实训)过程中，一旦发现仪器设备有损坏、出现故障等异常情况，应该怎么做？( )", options: ["A.无视损坏故障仪器，继续使用仪器", "B.继续使用，用完之后报告指导老师或场所管理人员", "C.先报告指导老师及场所管理员，然后挣得同意后，停止使用仪器", "D.立即停止使用、保护现场，并报告指导教师或场所管理人员"], answer: "D" },
+                { type: "single", question: "39. 学生校外实习(实训)活动一般由学校统一组织。学生要求自行联系实习(实训)单位的，( )。不得放任学生自行进行校外实习(实训)活动，也不得由中介机构代理组织、安排、管理学生校外实习(实训)活动。", options: ["A.须经二级学院同意并报至学生处审批", "B.须经二级学院同意并报至教务处审批", "C.须经二级学院审批同意", "D.须经学生处审批同意"], answer: "B" },
+                { type: "single", question: "40. 国家奖学金用于奖励我校二年级以上全日制本科生中特别优秀的学生(含二年级),国家奖学金的奖励标准为每人每年( )元。", options: ["A.8000", "B.6000", "C.10000", "D.12000"], answer: "A" },
+                { type: "single", question: "41. 学生在考试中交卷中偷看别人答案并涂改答案，按情节轻重给予( )处分；考生涉嫌考试作弊，拒不配合监考教师处理，故意纠缠、谩骂，按情节轻重给予( )处分。", options: ["A.给予记过或留校察看处分；给予留校察看或开除学籍处分", "B.给予严重警告或记过处分；给予记过或留校察看处分", "C.给予警告和严重警告处分；给予严重警告或记过处分", "D.给予严重警告或记过处分；给予留校察看或开除学籍处分"], answer: "A" },
+                { type: "single", question: "42. 国家奖学金评审，坚持公平、公正、公开、择优的原则，每学年( )。", options: ["A.一次", "B.两次", "C.三次", "D.四次"], answer: "A" },
+                { type: "single", question: "43. 国家奖学金用于奖励我校( )年级以上全日制本科生中特别优秀的学生。", options: ["A.一年级", "B.二年级", "C.三年级", "D.四年级"], answer: "B" },
+                { type: "single", question: "44. 根据图书馆规定，借书期限：外借书库图书借期为 ( )天。", options: ["A.120天", "B.100天", "C.90天", "D.80天"], answer: "A" },
+                { type: "single", question: "45. 根据图书馆规定，借书期限允许续借( )天。", options: ["A.5天", "B.15天", "C.30天", "D.50天"], answer: "C" },
+                { type: "single", question: "46. 根据《湖州学院图书馆读者管理细则》规定，读者借书到期日如逢寒暑假，则顺延到开学后( )天之内归还。", options: ["A.1天", "B.2天", "C.3天", "D.7天"], answer: "D" },
+                { type: "single", question: "47. 根据《湖州学院图书馆读者管理细则》规定，凡有撕页行为的，每撕一张赔罚( )元，并对当事读者作通报批评，情节严重的报学校相关部门或读者所在学院给予纪律处分。", options: ["A.5元", "B.10元", "C.15元", "D.20元"], answer: "D" },
+                { type: "single", question: "48. 根据《湖州学院图书馆读者管理细则》规定，违规：预约后未签到、使用结束未签离记违规，违规满( ) 次暂停选位权利3天。", options: ["A.1次", "B.2次", "C.3次", "D.4次"], answer: "C" },
+                { type: "single", question: "49. 学生社团必须依规注册登记，方可成立，须有 ( )名以上本校在读学生联合发起，所有发起人均须具有正式学籍，未受过校纪校规处分，具有开展该社团活动所必备的基本素质。", options: ["A.5名", "B.15名", "C.20名", "D.25名"], answer: "C" },
+                { type: "single", question: "50. 学生社团必须依规注册登记，方可成立，须有至少( )名指导教师。", options: ["A.1", "B.2", "C.3", "D.4"], answer: "A" },
+                { type: "single", question: "51. 社团成员应定期注册，注册时间为：( )。", options: ["A.每学期注册一次", "B.每年注册一次", "C.每两年注册一次", "D.每三年注册一次"], answer: "A" },
+                { type: "single", question: "52. 按社团要求规定，每名学生最多加入( )个学生社团。", options: ["A.1", "B.2", "C.3", "D.4"], answer: "B" },
+                { type: "single", question: "53. 学生社团负责人候选人须政治立场鲜明、学习成绩优秀、组织能力突出，学习成绩综合排名须在班级前( )%以内。", options: ["A.10%", "B.20%", "C.30%", "D.50%"], answer: "D" },
+                { type: "single", question: "54. 在党委学生工作部门的指导下，学生社团负责人由( )组织提名推荐、公开选举、考察公示、审核批准等环节遴选产生。", options: ["A.校团委", "B.组织部", "C.教务处", "D.辅导员"], answer: "A" },
+                { type: "single", question: "55. 学校鼓励学生社团健康有序发展，在经费、场地、设备、条件、制度等方面给予一定保障，按照平均每年每生不低于( )元的标准设立学生社团活动专项经费，支持学生社团活动正常开展，保证专款专用。", options: ["A.5元", "B.10元", "C.15元", "D.20元"], answer: "D" },
+                { type: "single", question: "56. 学杂费收缴管理工作由计划财务处、教务处、学工部等部门负责组织、管理和实施，( )承担学生学杂费的具体收(催)缴任务。", options: ["A.二级学院", "B.教务处", "C.校团委", "D.组织部"], answer: "A" },
+                { type: "multiple", question: "57. 有下列情形之一者，可以申请缓缴学杂费：( )", options: ["A.已经办理国家助学贷款(含生源地贷款),而贷款尚未到位的家庭经济困难学生", "B.家庭突遭不幸，暂时难以按时缴清学杂费的学生", "C.因创业需要，本人申请休学者", "D.不想交的"], answer: ["A","B","C"] },
+                { type: "single", question: "58. 学生应于每年( )月初(一般为开学一周内)向所在学院提出缓缴学杂费申请，由二级学院汇总后交计划财务处。", options: ["A.8", "B.9", "C.10", "D.11"], answer: "B" },
+                { type: "multiple", question: "59. 学校对欠费学生依照以下规定办理：( )", options: ["A.对有意欠费或未被批准缓缴学费的学生，不予办理注册和选课，并取消欠费年度的各种评优与评奖资格", "B.对已办理学杂费缓缴手续并获批准的学生，欠费期间若获得各类奖学金、助学金，应优先抵缴所欠学杂费", "C.对未办理相关手续自行离校的欠费学生，学院将保留依法追索欠款的权利", "D.退学"], answer: ["A","B","C"] },
+                { type: "single", question: "60. 学分学费按学生所修课程规定的学分计收。计费学分为四年制( )学分。", options: ["A.100", "B.120", "C.140", "D.160"], answer: "D" },
+                { type: "single", question: "61. 按照学校招生规定录取的新生，持入学通知书和学校规定的有关材料，按期到校办理入学手续。因故不能按期入学的，应写信并附原单位或所在街道、乡镇证明，向学校请假，假期一般不超过( )周。", options: ["A.1", "B.2", "C.3", "D.4"], answer: "B" },
+                { type: "multiple", question: "62. 新生有下列情况之一者，可以申请保留入学资格，保留入学资格期间不具有学籍，不享受在校生待遇：( )", options: ["A.因病经指定医院诊断，须停课治疗、休养时间占一学期总学时1/3以上者", "B.应征参加中国人民解放军(含中国人民武装警察部队)者", "C.因创业需要，本人申请保留入学资格者", "D.因其他特殊原因，本人申请或学校认为必须保留入学资格者"], answer: ["A","B","C","D"] },
+                { type: "single", question: "63. 经学校批准，新生可以申请保留入学资格( )年。", options: ["A.1", "B.2", "C.3", "D.4"], answer: "A" },
+                { type: "single", question: "64. 新生应征入伍，学校保留其入学资格至退役后( )年。", options: ["A.1", "B.2", "C.3", "D.4"], answer: "B" },
+                { type: "single", question: "65. 学生入学后，学校招生部门在( )个月内按照国家招生规定进行复查。", options: ["A.1", "B.2", "C.3", "D.4"], answer: "C" },
+                { type: "multiple", question: "66. 学生入学后，学校招生部门在3个月内按照国家招生规定进行复查。复查内容主要包括以下方面：( )", options: ["A.录取手续及程序等是否合乎国家招生规定", "B.所获得的录取资格是否真实、合乎相关规定", "C.本人及身份证明与录取通知、考生档案等是否一致", "D.身心健康状况是否符合报考专业或者专业类别体检要求，能否保证在校正常学习、生活", "E.艺术、体育等特殊类型录取学生的专业水平是否符合录取要求"], answer: ["A","B","C","D","E"] },
+                { type: "single", question: "67. 学生每学期修读的学分以25学分左右为宜，一般不能少于( )学分。", options: ["A.10", "B.15", "C.20", "D.30"], answer: "B" },
+                { type: "single", question: "68. 请假在( )天以内的由班主任审批，所在二级学院教学和学生管理部门备案", options: ["A.1", "B.2", "C.3", "D.4"], answer: "C" },
+                { type: "single", question: "69. 学生请假，应事先填写请假单，班主任签署意见。请假在3天以上1周以内的由所在( )负责人审批(在校外实习期间由带队老师审批),所在二级学院教学和学生管理部门备案", options: ["A.二级学院", "B.学生处", "C.教务处", "D.校长办公室"], answer: "A" },
+                { type: "single", question: "70. 学生缺旷课课时计算方法缺旷课1天及以上的，每天按( )课时计算。", options: ["A.2课时", "B.3课时", "C.4课时", "D.6课时"], answer: "D" },
+                { type: "single", question: "71. 补考均于下一学期自开学之日起( )内进行，一律凭学生证进场参加补考。", options: ["A.1周", "B.2周", "C.3周", "D.1月"], answer: "B" },
+                { type: "single", question: "72. 退学学生由所在( )提出意见，由校长办公会议研究决定。", options: ["A.学生本人", "B.学生家长", "C.班主任", "D.二级学院"], answer: "D" },
+                { type: "single", question: "73. 对退学的学生，由学校出具退学决定书并送交( )，同时报省教育厅备案。", options: ["A.学生本人", "B.学生家长", "C.班长", "D.班主任"], answer: "A" },
+                { type: "single", question: "74. 要求延长毕业，须在每年的5月向 ( )提交延长学制申请表与延长修业期的攻读计划，经所在二级学院审核同意后，报教务处批准。", options: ["A.所在二级学院", "B.班主任", "C.教务处", "D.辅导员"], answer: "A" },
+                { type: "single", question: "75. 学生本人对学位授予有异议的，可自校学位评定委员会会议结束之日起( )日内向学校学生申诉处理委员会提出申诉。在申诉期内未提出申诉的，学校不再受理。", options: ["A.1", "B.2", "C.3", "D.10"], answer: "D" },
+                { type: "single", question: "76. 各专业接受转入学生的人数，原则上按不低于本专业同年级人数( )的比例确定。", options: ["A.10%", "B.15%", "C.25%", "D.30%"], answer: "A" },
+                { type: "single", question: "77. 政治思想表现优良、未受过警告及以上处分的全校在籍全日制( )年级本科生都可以申请转专业。", options: ["A.一、二", "B.二、三", "C.一、三", "D.三、四"], answer: "A" },
+                { type: "single", question: "78. 相关二级学院接到学生转专业通知后， 一周内通知学生到( )办理转出、转入手续。", options: ["A.教务处", "B.学生处", "C.计财处", "D.校团委"], answer: "A" },
+                { type: "single", question: "79. 学生选课要参考本班课表的上课时间进行选课，应避免上课时间冲突；如有特殊情况(非个人原因),在征得( )同意并经学生所在二级学院教学副院长批准后，于选课前报教务处。", options: ["A.班长", "B.班主任", "C.任课教师", "D.辅导员"], answer: "C" },
+                { type: "multiple", question: "80. 修读课程学生有下列情形之一者，必须申请重修：( )", options: ["A.补考或缓考不及格者", "B.旷考或未参加补考者", "C.因缺课或缺交作业(实验报告)等原因而被取消考试资格者", "D.自己想重修课程的"], answer: ["A","B","C"] },
+                { type: "single", question: "81. 学生按规定申请办理选课有关手续后，跟班听课，并参加期末考试。如重修时间与正常教学时间相冲突，无法听课，学生可根据本人对重修课程的掌握程度申请该课程的理论部分免听课。免听课须经( )同意，并报开课学院批准。", options: ["A.班长", "B.班主任", "C.任课教师", "D.辅导员"], answer: "C" },
+                { type: "single", question: "82. 重修班实际授课学时不少于该课程计划学时的( )%,教学任务需在第14周前完成，第15周进行考核。", options: ["A.10%", "B.20%", "C.30%", "D.50%"], answer: "D" },
+                { type: "single", question: "83. 学生每人、每学期重修课程数原则上不超过( )门，参加重修的学生须 填写\"课程重修申请表\"。", options: ["A.一", "B.二", "C.三", "D.四"], answer: "B" },
+                { type: "single", question: "84. 学生延长学制一年申请一次，每年的5月由本人提出书面申请，填写《湖州学院学生延长学制申请表》,学生家长签署同意意见，经学生所在二级学院同意后，由( )统一到学生处和教务处办理审批手续，此表一式四份，教务处、学生处、学生所在二级学院、学生本人各存一份。", options: ["A.教务处", "B.学生处", "C.学生", "D.所在二级学院"], answer: "D" },
+                { type: "single", question: "85. 一个学期补考( )门(含)以上者，会达到一般预警(黄牌预警)。", options: ["A.一门", "B.两门", "C.三门", "D.四门"], answer: "C" },
+                { type: "single", question: "86. 还需重修学分累计( )学分(含)以上者，会达到一般预警(黄牌预警)。", options: ["A.2", "B.4", "C.6", "D.8"], answer: "D" },
+                { type: "single", question: "87. 还需重修学分累计( )学分(含)以上者；会达到退学预警(红牌预警)。", options: ["A.10", "B.12", "C.14", "D.16"], answer: "D" },
+                { type: "single", question: "88. 一学期内因累计旷课时数达到( )学时(含)以上受到记过及以上处分者，会受到退学预警(红牌预警)。", options: ["A.10", "B.15", "C.20", "D.25"], answer: "D" },
+                { type: "single", question: "89. 在校学习时间近( )年(含休学),难以完成学业的，退学预警(红牌预警)。", options: ["A.4", "B.5", "C.6", "D.7"], answer: "C" },
+                { type: "single", question: "90. 《学籍预警通知书》一式三份，经 ( )签字确认后，将其中1份连同《学籍预警家长通知单回执》由各二级学院辅导员以挂号信等形式寄给学生家长，并电话通知家长查收。", options: ["A.学生本人", "B.家长", "C.班主任", "D.辅导员"], answer: "A" },
+                { type: "single", question: "91. 学分制管理的课程分为( )和选修课两类。", options: ["A.专业选修课", "B.专业限选课", "C.专业任选课", "D.必修课"], answer: "D" },
+                { type: "single", question: "92. 本科各专业实行弹性学制，允许学生比标准学制年限提前1年或最长延( )年(包括休学)取得专业培养方案和指导性教学计划规定的学分。", options: ["A.1", "B.2", "C.3", "D.4"], answer: "B" },
+                { type: "single", question: "93. 本科生第二校园学习经历由二级学院根据本学院情况先行联系国内相关高校，初步确定拟派学生名额、访学专业等，报( )备案。", options: ["A.教务处", "B.学生处", "C.组织部", "D.校长办公室"], answer: "A" },
+                { type: "single", question: "94. 学生体质健康状况测试成绩管理。根据《国家学生体质健康标准》(2014年修订),学生测试成绩评定达到( )及以上者，方可参加评优与评奖。", options: ["A.良好", "B.一般", "C.优秀", "D.合格"], answer: "A" },
+                { type: "single", question: "95. 对期末成绩有异议的，须在新学期开学后( )联系所在二级学院教学办进行书面反馈，二级学院教学办按规定予以受理并联系任课教师进行核实，学生本人不得接触试卷。", options: ["A.一周内", "B.二周内", "C.三周内", "D.四周内"], answer: "B" }
+            ],
+            "奖助政策": [
+                { type: "single", question: "96. 在校学生需要查询成绩或出具在校学习成绩证明的，由所在二级学院统一审核打印成绩单后，到( )办理审核盖章手续。", options: ["A.教务处", "B.学生处", "C.辅导员", "D.安全保卫部"], answer: "A" },
+                { type: "single", question: "97. 学生毕业后，由教务处将毕业生成绩单统一打印、审核，加盖教务处公章，交存学校( )。", options: ["A.档案馆", "B.图书馆", "C.教务处", "D.学生处"], answer: "A" },
+                { type: "multiple", question: "98. 作为当代大学生，要了解马克思主义的宗教观，正确、全面理解我国的宗教政策，自觉尊重宗教习惯。具体要做到：( )", options: ["A.充分理解宗教信仰自由政策的内涵", "B.正确把握宗教信仰自由与高校管理的关系", "C.全面了解法律有关宗教活动场所的规定", "D.学生党团员要树立辩证唯物主义和历史唯物主义的世界观，不信教、不传教，树立科学的世界观", "E.警惕境内外反动宗教组织对我国的宗教渗透"], answer: ["A","B","C","D","E"] },
+                { type: "single", question: "99. 学分制收费总体实行\"按学年预收，毕业总结算\"的管理办法，即每学年开始时按( )个学分和专业学费标准预收学年学费，毕业时按学分制计分办法总结算，多退少补。学生毕业前应结清所有学费。", options: ["A.10", "B.20", "C.30", "D.40"], answer: "D" },
+                { type: "single", question: "100. 学分制收费项目由( )和学分学费两部分组成，每年预收的专业学费和学分学费总称为学年学费。", options: ["A.专业学费", "B.课业学费", "C.学时学费", "D.课程学费"], answer: "A" },
+                { type: "single", question: "101. 参军复员学生复学，符合学费减免规定的，持相关证明材料到学生处办理审批手续，( )按审批意见进行学杂费结算。", options: ["A.计划财务处", "B.教务处", "C.学生处", "D.二级学院"], answer: "A" },
+                { type: "single", question: "102. 学杂费收缴管理工作由计划财务处、教务处、学工部等部门负责组织、管理和实施，( )承担学生学杂费的具体收(催)缴任务。", options: ["A.二级学院", "B.学生处", "C.教务处", "D.计划财务处"], answer: "A" },
+                { type: "single", question: "103. 关于申请国家奖学金说法错误的是( )。", options: ["A.热爱社会主义祖国，拥护中国共产党的领导", "B.遵守宪法和法律，遵守学校规章制度", "C.在校期间学习成绩优异，创新能力、社会实践、综质等方面特别突出", "D.申请人的基本条件是学习成绩排名应位于前15%(含15%)"], answer: "D" },
+                { type: "single", question: "104. 关于评审国家奖学金说法错误的是( )。", options: ["A.国家奖学金用于奖励我校二年级以上全日制本科生中特别优秀的学生(含二年级),国家奖学金的奖励标准为每人每年8500元", "B.国家奖学金评审，坚持公平、公正、公开、择优的原则，每学年一次", "C.学校成立学生奖助工作领导小组，负责全校国家奖学金的评审", "D.二级学院成立相应的学生奖助工作领导小组，负责本学院国家奖学金的评审"], answer: "A" },
+                { type: "single", question: "105. 在符合基本条件的前提下，学习成绩排名没有进入前10%,但达到前30%(含30%)的学生，如在其他方面表现非常突出，也可申请国家奖学金。对于其他方面表现非常突出的说法错误的是( )。", options: ["A.在社会主义精神文明建设中表现突出，具有见义勇为、助人为乐、奉献爱心、服务社会、自立自强的实际行动，在本校、本地区产生重大影响，在全国产生较大影响，有助于树立良好的社会风尚", "B.在学术研究上取得显著成绩，以第一作者发表的通过专家鉴定的高水平论文，以第一，二，三作者出版的通过专家鉴定的学术专著", "C.在学科竞赛方面取得显著成绩，在国际和全国性专业学科竞赛、\"挑战杯\"大学生课外学术科技竞赛和创业计划竞赛、中国国际大学生创新大赛、全国大学生职业规划大赛等竞赛中获全国一等奖(或金奖)及以上奖励，竞赛目录可参考《湖州学院大学生学科竞赛实施细则》中国家级A类学科竞赛", "D.在创新发明方面取得显著成绩，科研成果获省、部级以上奖励或以第一专利权人为湖州学院且第一发明人获得国家发明专利(不包括实用新型专利、外观设计专利)"], answer: "B" },
+                { type: "single", question: "106. 以下关于国家奖学金申请条件说法错误的是( )。", options: ["A.转专业、复学的学生应到原所在二级学院进行参评", "B.国家奖学金评审，坚持公平、公正、公开、择优的原则，每学年一次", "C.同一学年内，可以同时获得国家奖学金、省政府奖学金、国家励志奖学金", "D.诚实守信，道德品质优良"], answer: "C" },
+                { type: "single", question: "107. 以下关于国家奖学金评审说法正确的是（ ）。", options: ["A.在学科竞赛方面取得显著成绩，在国际和全国性专业学科竞赛、\"挑战杯\"大学生课外学术科技竞赛和创业计划竞赛、中国国际大学生创新大赛、全国大学生职业规划大赛等竞赛中获全国一等奖(或金奖)及以上奖励，竞赛目录可参考《湖州学院大学生学科竞赛实施细则》中国家级B类学科竞赛", "B.在创新发明方面取得显著成绩，科研成果获省、部级以上奖励或以第一专利权人为湖州学院且第一发明人获得国家发明专利(包括实用新型专利、外观设计专利)", "C.在体育竞赛中取得显著成绩，为国家争得荣誉。非体育专业学生参加省级以上体育比赛获得个人项目前三名，集体项目前一名", "D.体育专业学生参加国际和全国性体育比赛获得个人项目前三名、集体项目前两名。集体项目应为上场主力队员"], answer: "D" },
+                { type: "single", question: "108. 以下关于国家奖学金申请、评审程序说法错误的是( )。", options: ["A.转专业学校及二级学院通过多种形式大力宣传国家奖学金政策，确保所有学生知晓国家奖学金申请时间、条件和评审程序。级学院要根据本办法及相关规定，制定具体的评审规程，报学校大学生资助服务中心备案", "B.学生根据国家奖学金基本申请条件及其他有关规定，向所在二级学院提出申请，并递交《普通高等学校国家奖学金申请审批表》", "C.学院将建议名单在学院内公示5个工作日。如师生有异议，评审组应在接到异议材料的3个工作日内予以答复", "D.评审工作原则是公开、公平、公正、择优"], answer: "C" },
+                { type: "single", question: "109. 关于奖学金发放、管理与监督的说法错误的是( )。", options: ["A.学校按要求将当年国家奖学金分批次发放给获奖学生并颁发统一印制的奖励证书，将所填《国家奖学金申请审批表》存入学生的档案", "B.获得国家奖学金的学生，应将奖学金用于学习和正当的生活需求，如因家庭经济困难而欠交学校相关费用的，应及时交纳拖欠学校的学费和其他费用。如发现国家奖学金获奖学生有严重违纪违规，或弄虚作假的，学校将及时上报省教育厅，申请取消其获奖资格，收回国家奖学金", "C.学校国家奖学金的评审、发放工作接受纪检部门的检查和监督", "D.二级学院成立相应的学生奖助工作领导小组，负责本学院国家奖学金的评审"], answer: "A" },
+                { type: "multiple", question: "110. 关于评审国家奖学金说法正确的是( )。", options: ["A.学校成立学生奖助工作领导小组，负责全校国家奖学金的评审", "B.国家奖学金评审，坚持公平、公正、公开、择优的原则，每学年一次", "C.二级学院成立相应的学生奖助工作领导小组，负责本学院国家奖学金的评审", "D.国家奖学金用于奖励我校二年级以上全日制本科生中特别优秀的学生(含二年级),国家奖学金的奖励标准为每人每年8500元"], answer: ["A","B","C"] },
+                { type: "multiple", question: "111. 关于申请国家奖学金说法正确的是( )。", options: ["A.热爱社会主义祖国，拥护中国共产党的领导", "B.遵守宪法和法律，遵守学校规章制度", "C.申请人基本条件要求学习成绩排名应位于前15%(含15%)", "D.积极参加体育锻炼，达到《国家学生体质健康标准(2014年修订)》(教体艺〔2014〕5号)良好及以上等级者"], answer: ["A","B","D"] },
+                { type: "multiple", question: "112. 关于国家奖学金申请、评定说法正确的是( )。", options: ["A.转专业、复学的学生应到原所在学院进行参评", "B.同一学年内，可以同时获得国家奖学金、省政府奖学金、国家励志奖学金", "C.学校及二级学院通过多种形式大力宣传国家奖学金政策，确保所有学生知晓国家奖学金申请时间、条件和评审程序。二级学院要根据本办法及相关规定，制定具体的评审规程，报学校大学生资助服务中心备案", "D.二级学院成立相应的学生奖助工作领导小组，负责本学院国家奖学金的评审"], answer: ["A","C","D"] },
+                { type: "multiple", question: "113. 关于省政府奖学金的解释错误的是( )。", options: ["A.申请人申请省政府奖学金基本条件是学习成绩排名应位于前10%（含10%）", "B.省政府奖学金用于奖励我校二年级以上全日制本科生中特别优秀的学生，省政府奖学金的奖励标准为每人每年6000元", "C.省政府奖学金评审，坚持公开、公平、公正的原则，每学年评审一次", "D.同一学年内，可以同时获得国家奖学金、省政府奖学金、国家励志奖学金"], answer: ["A","D"] },
+                { type: "single", question: "114. 关于省政府奖学金的基本申请条件错误的是( )。", options: ["A.热爱社会主义祖国，拥护中国共产党的领导", "B.遵守宪法和法律，遵守学校规章制度", "C.申请人学习成绩排名应位于前10%（含10%）", "D.诚实守信，道德品质优良"], answer: "C" },
+                { type: "single", question: "115. 在符合基本条件的前提下，学习成绩排名没有进入前15%，但达到前30%(含30%)的学生，如在其他方面表现非常突出，也可申请省政府奖学金，下列条件不符合的是( )。", options: ["A.在社会主义精神文明建设中表现突出，具有见义勇为、助人为乐、奉献爱心、服务社会、自立自强的实际行动，在本校、本地区产生重大影响，在全省产生较大影响，有助于树立良好的社会风尚", "B.在学术研究上取得显著成绩，以第一作者发表的通过专家鉴定的高水平论文，以第一，二作者出版的通过专家鉴定的学术专著", "C.在学科竞赛方面取得显著成绩，在省级专业学科竞赛、\"挑战杯\"大学生课外学术科技竞赛和创业计划竞赛、中国国际大学生创新大赛、全国大学生职业规划大赛等竞赛中获浙江省二等奖(或银奖)及以上奖励", "D.在创新发明方面取得显著成绩，科研成果获省、部级以上奖励或以第一专利权人为湖州学院且第一发明人获得国家发明专利(包括实用新型专利、外观设计专利)"], answer: "D" },
+                { type: "single", question: "116. 关于省政府奖学金的申请、评审程序说法错误的是( )。", options: ["A.学校及二级学院通过多种形式大力宣传省政府奖学金政策，确保所有学生知晓省政府奖学金申请时间、条件和评审程序", "B.学生根据省政府奖学金基本申请条件及其他有关规定，向所在二级学院提出申请，并递交《普通高等学校省政府奖学金申请审批表》", "C.二级学院要根据本办法及相关规定，制定具体的评审规程，报学校大学生资助服务中心备案", "D.学院将建议名单在学院内公示5个工作日。如师生有异议，评审组应在接到异议材料的当天内予以答复"], answer: "D" },
+                { type: "single", question: "117. 参与省政府奖学金评选的条件说法错误的( )。", options: ["A.转专业、复学的学生通过应到原所在二级学院进行参评", "B.同一学年内，可同时获得国家奖学金、省政府奖学金、国家励志奖学金", "C.在校期间学习成绩优异，社会实践、创新能力、综合素质等方面特别突出的给予倾斜", "D.在符合基本条件的前提下，学习成绩排名没有进入前15%，但达到前30%(含30%)的学生，如在其他方面表现非常突出，也可申请省政府奖学金"], answer: "B" },
+                { type: "multiple", question: "118. 关于省政府奖学金发放、管理与监督的说法正确的有( )。", options: ["A.学校按要求将当年省政府奖学金分批次发放给获奖学生。颁发统一印制的奖励证书，将所填《省政府奖学金申请审批表》存人学生的档案", "B.获得省政府奖学金的学生，应将奖学金用于学习和正当的生活需求，如因家庭经济困难而欠交学校相关费用的，应及时交纳拖欠学校的学费和其他费用", "C.如发现省政府奖学金获奖学生有严重违纪违规，或弄虚作假的，学校将及时上报省教育厅，申请取消其获奖资格，收回省政府奖学金", "D.学校省政府奖学金的评审、发放工作接受纪检部门的检查和监督"], answer: ["B","C","D"] },
+                { type: "multiple", question: "119. 关于省政府奖学金组织机构正确的是( )。", options: ["A.学校成立学生奖助工作领导小组，负责全校省政府奖学金的评审", "B.二级学院成立相应的学生奖助工作领导小组，负责本学院省政府奖学金的评审", "C.学生处设立大学生资助服务中心，具体负责组织和管理我校省政府奖学金的评审工作", "D.工作领导小组通常由班主任和学生代表组成"], answer: ["A","B","C"] },
+                { type: "multiple", question: "120. 关于评审省政府奖学金办法的说法正确的是( )。", options: ["A.学校省政府的奖学金的评审、发放工作接受纪检部门的检查和监督", "B.转专业、复学的学生通过应到原所在二级学院进行参评", "C.省政府奖学金用于奖励我校二年级以上全日制本科生中特别优秀的学生，省政府奖学金的奖励标准为每人每年8000元。(资助金额严格参照相关政策文件)", "D.省政府奖学金评审，坚持公开、公平、公正的原则，每学年评审一次"], answer: ["A","B","D"] },
+                { type: "multiple", question: "121. 关于省政府奖学金的申请条件说法正确的有( )。", options: ["A.热爱社会主义祖国，拥护中国共产党的领导", "B.遵守宪法和法律，遵守学校规章制度", "C.在校期间学习成绩优异，社会实践、创新能力、综合素质等方面特别突出的给予倾斜", "D.申请人学习成绩排名应位于前10%(含10%)"], answer: ["A","B","C"] },
+                { type: "multiple", question: "122. 下关于省政府奖学金申请条件说法正确的是( )。", options: ["A.转专业、复学的学生应到原所在二级学院进行参评", "B.国家奖学金评审，坚持公平、公正、公开、择优的原则，每学年一次", "C.同一学年内，可以同时获得国家奖学金、省政府奖学金、国家励志奖学金", "D.诚实守信，道德品质优良"], answer: ["A","B","D"] },
+                { type: "single", question: "123. 特等奖学金和国家奖学金( )。", options: ["A.可以兼评，荣誉、奖金兼得", "B.可以兼评，荣誉兼得，奖金就高", "C.可以兼评，荣誉奖金不可兼得", "D.不可兼得"], answer: "B" },
+                { type: "single", question: "124. 优秀学生，每类择优评选，不超过学生数的( )%。", options: ["A.5", "B.10", "C.15", "D.20"], answer: "A" },
+                { type: "single", question: "125. 学校学生奖助工作领导小组审议二级学院评审材料，提出本校当年学金获奖学生建议名单，在校公示期间若师生有异议，领导小组应在接到异议材料的( )个工作日内予以答复。", options: ["A.2", "B.3", "C.5", "D.7"], answer: "A" },
+                { type: "single", question: "126. 符合以下哪项基本条件的学生不能参加各类奖学金的评定( )。", options: ["A.积极要求上进，尊敬师长，团结同学，关心集体，诚实守信", "B.综合素质评价达到所在学院规定标准", "C.在专业教学计划中考试考查课程有一门不及格现象", "D.遵守国家法律和校纪校规，未受过纪律处分"], answer: "C" },
+                { type: "single", question: "127. 一等奖学金评选其中一个条件为平均学分绩点排名在班级前( )。", options: ["A.5%", "B.10%", "C.15%", "D.20%"], answer: "C" },
+                { type: "single", question: "128. 以下哪一个不属于单项奖学金( )。", options: ["A.公益服务奖学金", "B.学业优秀奖学金", "C.社会实践奖学金", "D.考研奖学金"], answer: "D" },
+                { type: "single", question: "129. 符合以下哪种情况奖学金会被回收( )。", options: ["A.买学习用品", "B.用于日常伙食", "C.交纳拖欠学校的学费", "D.材料虚假"], answer: "D" },
+                { type: "single", question: "130. 以下不正确的是( )。", options: ["A.各类别奖学金内部原则上可以兼评", "B.综合类奖学金或单项奖学金原则上可以与国家奖学金兼得", "C.在可兼评的情况下，家庭经济困难的学生不受奖学金就高限制", "D.国家奖学金和外设类奖学金不可兼评"], answer: "A" },
+                { type: "single", question: "131. 奖学金每年评定( )次。", options: ["A.1", "B.2", "C.3", "D.4"], answer: "A" },
+                { type: "single", question: "132. 奖学金于每年( )开始评定。", options: ["A.4-5月", "B.6-7月", "C.9-11月", "D.11-12月"], answer: "C" },
+                { type: "single", question: "133. 以下不属于个人荣誉称号的是( )。", options: ["A.优秀团员", "B.十佳大学生", "C.优秀学生干部", "D.优秀团组织"], answer: "D" },
+                { type: "single", question: "134. 以下不属于十佳文明班级评定要求的是( )。", options: ["A.参评学年无学生因违法或违纪受到处分", "B.班级学生平均学分绩点位于专业前列，考证考级等活动表现平平", "C.定期组织开展文娱、团建及公益活动", "D.班级充分结合班情，形成工作特色"], answer: "B" },
+                { type: "single", question: "135. 以下不符合优秀学生评定的是( )。", options: ["A.小A获得过一等奖学金", "B.小B通过了英语六级", "C.小C是英专生通过了专四", "D.小D是体育生，但还未通过任何语言等级考试"], answer: "D" },
+                { type: "single", question: "136. 以下不符合优秀学生干部评定的是( )。", options: ["A.小A在班级里担任班长，认真负责", "B.小B担任学生公寓楼长，但工作考核为优秀", "C.小C在同学中有较高威信，切实起到模范带头作用", "D.小D综合素质评价中全部合格，且有两个优秀"], answer: "D" },
+                { type: "single", question: "137. 以下不能参与优秀毕业生评定的是( )。", options: ["A.小A在校期间获得过一次一等奖学金、一次优秀学生，且通过了英语四级", "B.小B在校期间获得过五四青年奖章，且获得过某学科竞赛国家二等奖", "C.小C以第一作者身份在某一级期刊上发表过文章", "D.小D在校期间获得过一次三等奖学金，两次优秀团干部，且通过了大学日语四级"], answer: "D" },
+                { type: "single", question: "138. 优秀学生的评定名额比例为( )。", options: ["A.3%", "B.5%", "C.10%", "D.15%"], answer: "B" },
+                { type: "single", question: "139. 十佳文明班级的奖励标准是( )。", options: ["A.1000元/班", "B.2000元/班", "C.3000元/班", "D.5000元/班"], answer: "C" },
+                { type: "single", question: "140. 优秀毕业生的评定时间为( )。", options: ["A.3-4月", "B.毕业前一个学期初", "C.毕业后一个月内", "D.毕业前一个学期末"], answer: "D" },
+                { type: "single", question: "141. 以下说法错误的是( )。", options: ["A.学生个人或集体对照评定条件，向所在二级学院提出中请，填写相关荣誉称号申请表，提供各类先进、荣誉、获奖的正式表彰文件或菜誉证书，并经班级评议后报二级学院学生工作办公室，集体荣誉由各二级学院根据评选办法，按比例进行推荐", "B.各二级学院成立学生兴助工作领导小组，依据具体条件评审出所在二级学院各类学生荣誉称号", "C.转专业、复学学生本学期的荣誉称号在现专业中评定", "D.评审报告需对学院领导小组评审名单、学院评比细则、评审程序、公示情况进行详细说明"], answer: "C" },
+                { type: "single", question: "142. 优秀毕业生名额占毕业生数的( )。", options: ["A.5%", "B.10%", "C.15%", "D.20%"], answer: "C" },
+                { type: "single", question: "143. 学生综合素质评价的内容由10个项目组成：思想政治、文明修身、服务学生、实践公益、文体活动、( )、职业技能、学习态度、学业成绩和二级学院自设项。下面哪个选项是10个项目之一。", options: ["A.创新创业", "B.以身作则", "C.严于律己", "D.志向高远"], answer: "A" },
+                { type: "single", question: "144. 学生综合素质评价每学年开展( )次。", options: ["A.1", "B.2", "C.3", "D.4"], answer: "A" },
+                { type: "single", question: "145. 评价小组由班主任、班长、( )和学生代表组成。", options: ["A.学习委员", "B.体育委员", "C.生活委员", "D.团支书"], answer: "D" },
+                { type: "single", question: "146. 集体评议汇总表须在班级内公示( )天，公示无异议后上交所在学院学工办。", options: ["A.4", "B.6", "C.7", "D.3"], answer: "D" },
+                { type: "single", question: "147. 对毕业生的综合素质总评一般在最后一学年的第一学期进行按照所列项目评价。下面说法正确的是( )。", options: ["A.前三年评价中只有两次上\"优秀\"，且没有\"不合格\"的，总评为合格", "B.前三年评价中只有一次上\"优秀\"，且没有不合格的总评为合格", "C.前三年评价中三次都是\"不合格\"，且没有不合格的总评为\"不合格\"", "D.前三年评价中只有一次\"不合格\"总评为\"不合格\""], answer: "B" }
+            ],
+            "考试纪律": [
+                { type: "single", question: "148. 学生在自评过程中有弄虚作假的，班级评议和二级学院审核可将相应项目和( )项直接确定为\"不合格\"。", options: ["A.思想政治", "B.实践公益", "C.文明修身", "D.学习态度"], answer: "C" },
+                { type: "single", question: "149. 毕业生总评汇总结果经公示无异议后，由( )级学院盖章，二级学院留存。", options: ["A.一", "B.二", "C.三", "D.四"], answer: "B" },
+                { type: "single", question: "150. 凡在综合测评中弄虚作假者，一经查实，给予批评教育，同时( )。", options: ["A.给予警告处分", "B.给予严重警告处分", "C.取消该学年任何评奖评优资格", "D.取消该学期任何评奖评优资格"], answer: "D" },
+                { type: "single", question: "151. ( )项评价统计综合后，即为学生一学年的综测素质评价结果。", options: ["A.7", "B.10", "C.9", "D.8"], answer: "B" },
+                { type: "single", question: "152. 学业成绩项为平均分绩点GPA，由各二级学院教学办按照( )给定。", options: ["A.《湖州学院学分制实施方法》", "B.《湖州学院大学生综合素质评价表》", "C.《湖州学院学生综合素质总评表》", "D.《湖州学院学分制实施办法》"], answer: "D" },
+                { type: "single", question: "153. 集体荣誉称号有:五四红旗团委（支部）、( )。", options: ["A.先进班级组织", "B.先进团组织", "C.青年五四奖章", "D.优秀团员"], answer: "B" },
+                { type: "single", question: "154. 优秀团员评选不超过团员的( )％。", options: ["A.4", "B.3.5", "C.2.5", "D.2"], answer: "C" },
+                { type: "single", question: "155. 班级优秀团干部评选人数不超过班级团干部人数的( )％。", options: ["A.9", "B.9.5", "C.10", "D.10.5"], answer: "C" },
+                { type: "single", question: "156. 青年五四奖章获得者应是在政治思想、道德品质、专业学习、( )等方面表现突出。", options: ["A.文体活动", "B.志愿活动", "C.学科竞赛", "D.课堂表现"], answer: "A" },
+                { type: "single", question: "157. 先进团组织认真完成上级团组织交办的各项工作任务，工作有创新，每年至少开展( )次有特色有影响的活动。", options: ["A.1", "B.2", "C.3", "D.4"], answer: "B" },
+                { type: "single", question: "158. 下列考试中哪些情况按情节严重给予警告或严重警告处分?", options: ["A.不按指定位置就坐，且不听监考教师调动", "B.交头接耳，索要答案，偷看、抄袭他人答案", "C.传递纸条、交换试卷、有意将自己的试卷让他人抄袭答案的双方", "D.闭卷中偷看别人答案并涂改答案"], answer: "A" },
+                { type: "single", question: "159. 下列考试中哪些情况按情节轻重给予留校察看或开除学籍处分?", options: ["A.参与团伙作弊", "B.本场考试第二次违反场纪律者", "C.组织团伙作弊", "D.交卷后，有意在试场逗留，向他人说题"], answer: "C" },
+                { type: "single", question: "160. 对学生处分，根据( )处理。", options: ["A.学生违纪处分办法", "B.学生教育法", "C.学生高等教育法", "D.高等学校学生行为准则"], answer: "A" },
+                { type: "single", question: "161. 优秀团干部原则上学生团干部担任团内职务( )学期含以上。", options: ["A.一", "B.二", "C.三", "D.四"], answer: "A" },
+                { type: "single", question: "162. 校院两级团学组织优秀团干部评选人数不超过校我院两级团干部数的( )％。", options: ["A.10", "B.15", "C.20", "D.25"], answer: "C" },
+                { type: "single", question: "163. 在考试中，以下哪种行为给予警告或严重警告处分？", options: ["A.不按指定位置就坐，且不听监考老师调动", "B.交头接耳，索要答案，偷看，抄袭他人答案", "C.传递纸条，交换试卷", "D.参与团伙作弊"], answer: "A" },
+                { type: "single", question: "164. 以下说法正确的是( )。", options: ["A.交卷后未及时离开考场，给予通报批评处分", "B.参与团伙作弊，给予严重警告处分或记过处分", "C.本场考试第二次违反试场纪律者，给予记过或留校察看处分", "D.交卷后有意在考场逗留，向他人说题，给予警告或严重警告处分"], answer: "C" },
+                { type: "single", question: "165. 下列什么行为属于考试作弊( )。", options: ["A.考试结束后，在考场内发现有违规痕迹", "B.考试结束后，由他人检举揭发其违纪并经查实", "C.拒绝出示考试证或身份证", "D.偷看他人答案，并涂改"], answer: "D" },
+                { type: "single", question: "166. 学生在考试中以下哪种行为，按情节轻重给予留校察看或开除学籍处分( )。", options: ["A.利用手机、互联网等通讯方式作弊", "B.参与团伙作弊", "C.交头接耳，索要答案，偷看、抄袭他人答案", "D.传递纸条、交换试卷"], answer: "A" },
+                { type: "single", question: "167. 学生在考试中哪一行为，给予记过或留校察看处分( )。", options: ["A.使用他人信息冒名参加考试", "B.涂改他人试卷姓名占为己有", "C.组织团伙作弊", "D.参与团伙作弊"], answer: "D" },
+                { type: "single", question: "168. 以下说法正确的是( )。", options: ["A.交头接耳，索要答案，偷看、抄袭他人答案，属于考试违纪", "B.交头接耳，索要答案，偷看、抄袭他人答案，属于考试作弊", "C.交头接耳，索要答案，偷看、抄袭他人答案；属于考试严重作弊", "D.交头接耳，索要答案，偷看、抄袭他人答案；给予严重警告处分"], answer: "B" },
+                { type: "single", question: "169. 涉及考试与成绩情况而行贿教师者给予( )处分。", options: ["A.留校察看处分", "B.开除学籍", "C.严重警告", "D.记过"], answer: "A" },
+                { type: "single", question: "170. 考生考试作弊，拒不配合监考教师处理，故意纠缠、谩骂，给予( )处分。", options: ["A.留校察看或开除学籍", "B.记过或严重警告", "C.留校察看或记过", "D.开除学籍或退学"], answer: "A" },
+                { type: "single", question: "171. 闭卷考试中将通讯工具（无论开机与否）、与课程内容，有关的资料、存储有与课程内容有关资料的电子设备带入试场、并将其放在考生可及范围之内。开卷考试中交换书籍、笔记本或有关考试的资料（包括交换的双方）给予( )处分。", options: ["A.警告或严重警告", "B.严重警告或记过", "C.记过或留校察看", "D.取消学位或开除学籍"], answer: "A" },
+                { type: "single", question: "172. 以下说法正确的是( )。", options: ["A.请他人代考，涂改他人试卷姓名占为己有，给予留校察看或开除学籍处分", "B.请他人代考，涂改他人试卷姓名占为己有，给予记过或留校察看处分", "C.请他人代考，涂改他人试卷姓名占为己有，给予严重警告处分", "D.请他人代考，涂改他人试卷姓名占为己有，给予警告处分"], answer: "A" },
+                { type: "single", question: "173. 学校给予学生处分，坚持什么与什么相结合( )。", options: ["A.教育与惩戒", "B.批评与教育", "C.事实与实际", "D.证据与程序"], answer: "A" },
+                { type: "single", question: "174. 下列哪项不属于记录处分( )。", options: ["A.警告", "B.严重警告", "C.记过", "D.通报批评"], answer: "D" },
+                { type: "single", question: "175. 违反宪法，反对四项基本原则、破坏安定团结、扰乱社会秩序，给予( )处分。", options: ["A.开除学籍", "B.严重警告", "C.记过", "D.通报批评"], answer: "A" },
+                { type: "single", question: "176. 过失损坏公私财物，情节较重的，给予( )处分。", options: ["A.警告或严重警告", "B.记过", "C.开除学籍", "D.警告"], answer: "A" },
+                { type: "single", question: "177. 在学生公寓内起哄闹事、砸掷物品等破坏正常的管理秩序和学习生活秩序者、情节特别严重的，给予( )处分。", options: ["A.警告", "B.严重警告", "C.记过", "D.开除学籍"], answer: "D" },
+                { type: "single", question: "178. 擅自在学生宿舍留宿他人，经批准教育不改的，情节严重的，给予( )处分。", options: ["A.警告", "B.严重警告", "C.留校察看", "D.开除学籍"], answer: "C" },
+                { type: "single", question: "179. 一学期内旷课累计学时达到下列程度者(毕业设计、课程设计、生产实习等 一天按6 学时计)说法错误的是( )。", options: ["A.7-14学时的，给予严重警告处分", "B.15-24学时的，给予严重警告处分", "C.25-34学时的， 给予记过处分", "D.35学时以上的，给予留校察看处分"], answer: "A" },
+                { type: "single", question: "180. 毕业设计、学位论文、公开发表的研究成果存在抄袭、篡改、伪造等学术不端行为、代写论文、买卖论文等情节特别严重的，给予( )处分。", options: ["A.留校察看", "B.记过", "C.开除学籍", "D.严重警告"], answer: "C" },
+                { type: "single", question: "181. 下列说法错误的是( )。", options: ["A.擅自转发不实信息，给学校和他人造成不良影响的，给予警告处分", "B.捏造或者歪曲事实、散布谣言或虚假信息、扰乱社会秩序和学校稳定的，视情节轻重，给予严重警告以上，留校察看以下处分;情节特别严重的，给予开除学籍处分", "C.散发恶意信息或信息垃圾、公然侮辱他人或捏造事实诽谤他人，或者侵犯他人名誉权，或者冒用他人名义发布信息的，视情节轻重，给予严重警告以上，留校察看以下处分;情节特别严重的，给予开除学籍处分", "D.宣扬邪教、封建迷信、淫秽、色情、赌博、暴力、凶杀、恐怖、教唆犯罪的，视情节轻重，给警告处分;情节特别严重的，给予开除学籍处分"], answer: "D" },
+                { type: "single", question: "182. 下列处分错误的是( )。", options: ["A.虽未动手打人，但用言词侮辱或其他方式触犯他人，引起事端或激化矛盾，造成打架后果者，视情节轻重，给予严重警告以上，记过以下处分", "B.动手打人未造成伤害后果者,给予严重警告处分;动手打人，致他人轻微伤、轻伤或重伤的，视情节轻重给予记过以上，开除学籍以下处分", "C.结伙斗殴、持械斗殴者，比照本条第 二款从重处分;为首的，视情节轻重给予留校察看或开除学籍处分", "D.酗酒滋事引起打架、斗殴后果的，比照本条第二款从重处分"], answer: "A" },
+                { type: "single", question: "183. 学校内的申诉处理机构是( )。", options: ["A.公共事务管理处", "B.大学生资助中心", "C.申诉处理委员会", "D.教务处"], answer: "C" },
+                { type: "single", question: "184. 若学生对于学校做出的处理或处分有异议的应当( )。", options: ["A.在收到学校处理或者处分决定书之日起10日内向学生申诉委员会提出书面申诉", "B.联系公共事务管理处解决", "C.私下解决", "D.找班主任解决"], answer: "A" },
+                { type: "multiple", question: "185. 学生提出申诉时应当( )。", options: ["A.向学生申诉管理办公室提交湖州学院学生申诉申请表", "B.向学生申诉管理办公室提交检讨书", "C.随申诉申请表附上学校相关部门做出的处理决定文件和申诉人有效身份证件", "D.找辅导员提出申诉"], answer: ["A","C"] },
+                { type: "single", question: "186. 学生申诉处理委员会通过召开会议审查学校处理决定认定的事实是否清楚，适用依据是否准确，处理流程是否合法，处理措施是否恰当。会议期间以下选项错误的是( )。", options: ["A.学生申诉处理委员会可以要求申诉人到会说明有关情况", "B.涉及到重大利益的，学生可以申请听证", "C.会议决定事项，出席委员同意超过三分之一即可通过", "D.学生申诉委员会委员如果与申诉人有利害关系的应当回避"], answer: "C" },
+                { type: "single", question: "187. 学生对于申诉处理决定有异议的可以( )。", options: ["A.在接到学校申诉处理决定书之日的二十五日内，向浙江省教育厅提出书面申诉", "B.向校长办公室提出申诉", "C.向学生资助中心提出申诉", "D.向学生会提出申诉"], answer: "A" }
+            ],
+            "日常管理": [
+                { type: "single", question: "188. 听证程序不包括( )。", options: ["A.听证主持人宣布听证开始", "B.申诉人起草听证报告", "C.听证团成员就有关证据进行质问", "D.听证主持人宣布听证结束"], answer: "B" },
+                { type: "single", question: "189. 学生就同一事件最多可以申诉的次数为( )。", options: ["A.1", "B.2", "C.3", "D.4"], answer: "A" },
+                { type: "single", question: "190. 学生提出申诉的原则包括( )。", options: ["A.富强 民主", "B.文明 和谐", "C.严肃 认真 诚实", "D.自由 平等"], answer: "C" },
+                { type: "single", question: "191. 下列部门中或人员中，有哪些不是学生申诉委员会的组成部分( )。", options: ["A.学校办公室", "B.教务处", "C.团委", "D.辅导员"], answer: "D" },
+                { type: "single", question: "192. 因毕业、结业、退学、开除、休学、转学等原因离校的学生，应到( )办理退宿手续。", options: ["A.学生公寓服务中心", "B.学生处", "C.二级学院", "D.宿管阿姨处"], answer: "A" },
+                { type: "single", question: "193. 要求假期留校住宿的学生应在( )向学生所在学院提出申请，填写《湖州学院学生假期留校住宿申请表》，经班主任、所在二级学院领导同意，并报校学生处批准，可留校住宿。", options: ["A.学期伊始", "B.学期结束前的两周", "C.学期结束时", "D.学期结束后的两周"], answer: "B" },
+                { type: "single", question: "194. 公寓实行访客登记制度，访客须在( )前离开公寓。", options: ["A.19:00", "B.20:00", "C.21:00", "D.22:00"], answer: "D" },
+                { type: "single", question: "195. 学生应按时起床，在晚上公寓楼关门前回寝室休息。学生因特殊原因不能回校住宿的，要向( )请假。", options: ["A.班主任", "B.辅导员", "C.宿管阿姨", "D.班主任和辅导员"], answer: "B" },
+                { type: "single", question: "196. 学生宿舍晚上按学校规定时间实行统一熄灯，夏令统一熄灯时间为( )，冬令统一熄灯时间为( )。", options: ["A.22:00;23:00", "B.23:00;22:00", "C.23:00;22:30", "D.22:30;23:00"], answer: "C" },
+                { type: "single", question: "197. 下列说法错误的是( )。", options: ["A.学生一律不得在学生公寓留宿校外人员", "B.严禁吵闹、斗殴、酗酒、赌博、吸烟等", "C.离开宿舍时要锁好门窗，妥善保管现金及贵重物品", "D.住宿学生可以私自调换寝室"], answer: "D" },
+                { type: "single", question: "198. 校园24小时报警电话为：( )", options: ["A.0572-2121110", "B.0572-2421110", "C.0572-2521110", "D.0572-2321110"], answer: "D" },
+                { type: "single", question: "199. 下列说法错误的是( )。", options: ["A.住宿学生不得挪用、损坏消防设施及器材", "B.住宿学生不得以任何形式堵塞消防通道（过道、楼梯、阳台、窗口等）", "C.住宿学生在宿舍内不得储藏或使用易燃、易爆、强腐蚀性等危险物品", "D.住宿学生可以把非机动车、摩托车进入公寓大厅、楼道及寝室"], answer: "D" },
+                { type: "multiple", question: "200. 住宿学生应按照指定的学生公寓楼寝室、床位住宿。住宿学生不得私自调换寝室。因特殊原因确需调换房间或调整床位的，需要完成下列哪些手续？( )", options: ["A.学生本人提出书面申请", "B.二级学院签署意见", "C.经学生处同意后", "D.经宿管阿姨同意"], answer: ["A","B","C"] },
+                { type: "multiple", question: "201. 学生因个人原因需办理退宿，需要完成下列哪些手续？( )", options: ["A.本人提出申请", "B.学生家长签字", "C.经所在二级学院同意", "D.学生处备案"], answer: ["A","B","C","D"] },
+                { type: "multiple", question: "202. 下列有关假期校内住宿的说法，正确的是( )。", options: ["A.假期留宿按照集中住宿原则安排宿舍，留校学生须服从学校统一调配", "B.住宿学生如需延长或缩短住宿时间，应提前向二级学院申请变更", "C.如中途离校，应向二级学院提出书面申请，并报学生处备案", "D.住宿学生必须与平时一样严格遵守有关管理规定，并积极配合假期学生公寓管理小组的管理工作"], answer: ["A","B","C","D"] },
+                { type: "multiple", question: "203. 下列有关宿舍用电安全的说法，正确的是哪几项？( )", options: ["A.学生应领取、张贴安全用电标识，规范使用", "B.学生不得在公寓内私拉电线，不得接线板串联使用，严禁盗用公共用电", "C.电动自行车（电池）在学校指定的室外充电桩充电，不得在公寓楼内充电", "D.学生可以在宿舍使用小功率电煮锅、电炉、电热杯等电器"], answer: ["A","B","C"] },
+                { type: "multiple", question: "204. 下列有关宿舍安全的说法，错误的是哪几项？( )", options: ["A.学生可以自行加装门锁", "B.学生可以在宿舍留宿陌生人", "C.学生不得将宿舍钥匙借给其他人", "D.学生可以携带陌生人去宿舍"], answer: ["A","B","D"] },
+                { type: "multiple", question: "205. 下有关学生公寓教育管理的说法正确的是哪几项？( )", options: ["A.将星级文明寝室、优秀寝室作为学生综合素质评定、推优入党、奖学金评定、优秀学生干部的评选依据之一", "B.学生违反本住宿管理办法，情节轻微的，视情况分别给予口头批评教育、书面警示、通报批评教育", "C.学校实行干部教师联系学生寝室制度，定期深入寝室开展谈心谈话工作，了解掌握学生思想动态", "D.学生造成学校或他人财产损失的，应承担赔偿责任。涉嫌违法犯罪的，移交司法机关处理"], answer: ["A","B","C","D"] },
+                { type: "single", question: "206. 国家励志奖学金的奖励标准为( )/人/学年。", options: ["A.2000", "B.3000", "C.4000", "D.5000"], answer: "D" },
+                { type: "single", question: "207. 国家助学金分为( )档", options: ["A.1", "B.2", "C.3", "D.4"], answer: "B" },
+                { type: "single", question: "208. 用于资助家庭经济特别困难学生的国家助学金资助标准为( )/人/年。", options: ["A.2700", "B.3600", "C.4500", "D.4800"], answer: "C" },
+                { type: "single", question: "209. 用于资助家庭经济困难学生的国家助学金资助标准为( )/人/年。", options: ["A.1800", "B.2700", "C.3600", "D.4500"], answer: "B" },
+                { type: "single", question: "210. 二级学院国家助学金评审领导小组将初步名单及资助档次在学院内公示( )个工作日，如师生有异议，评审领导小组应在街道异议材料的( )个工作日内予以答复。", options: ["A.5；3", "B.6；2", "C.5；2", "D.6；3"], answer: "C" },
+                { type: "single", question: "211. 国家助学金与其他助学金兼得者的同学，每学年资助总额，每学年资助总额原则上不高于( )元。", options: ["A.5000", "B.6000", "C.7000", "D.8000"], answer: "D" },
+                { type: "single", question: "212. 学校在国家助学金下达的( )个工作日内，将国家助学金按要求发放给学生。", options: ["A.7", "B.10", "C.14", "D.15"], answer: "D" },
+                { type: "single", question: "213. 各二级学院以班级为单位，成立以班主任为组长，班委、学生代表担任成员的认定评议小组，负责班级的学生资助对象认定与民主评议工作。认定评议小组成员中学生代表人数视班级人数合理配置，应具有广泛的代表性:一般占到班级人数的( )。", options: ["A.10%-15%", "B.15%-20%", "C.20%-25%", "D.25%-30%"], answer: "B" },
+                { type: "single", question: "214. 学生资助对象认定工作每学年进行一次，则上在新学年开学( )天内完成。每学期应当按照学生家庭经济实际情况进行认定结果复核和动态调整。", options: ["A.30", "B.45", "C.50", "D.60"], answer: "D" },
+                { type: "single", question: "215. 学生资助认定程序共有( )项。", options: ["A.3", "B.4", "C.5", "D.6"], answer: "B" },
+                { type: "single", question: "216. 学生参加勤工助学的时间原则上每周不超过( )小时，每月不超过( )小时。", options: ["A.8；30", "B.6；30", "C.8；40", "D.6；40"], answer: "C" },
+                { type: "single", question: "217. 寒暑假勤工助学时间根据实际情况确定，一般每周不超过( )小时，每月不超过( )小时。", options: ["A.16；80", "B.12；60", "C.16；60", "D.12；80"], answer: "A" },
+                { type: "single", question: "218. 学生每人每年申请贷款额度最高不超过( )元。", options: ["A.8000", "B.10000", "C.12000", "D.15000"], answer: "C" },
+                { type: "single", question: "219. 国家助学贷款期限为学制加( )年，最长不超过( )年。", options: ["A.4；6", "B.8；15", "C.13；20", "D.15；21"], answer: "C" },
+                { type: "single", question: "220. 学生申请临时困难补助，原则上一次最高不超过( )元，一学年总额不超过( )元。", options: ["A.2000；4000", "B.1000；2000", "C.2000；3000", "D.3000；5000"], answer: "A" },
+                { type: "single", question: "221. 学生本人遭遇重大意外身体伤害事故或突发急重病症住院治疗的补助( )元。", options: ["A.400-1000", "B.800-2000", "C.600-1500", "D.1000-3000"], answer: "B" },
+                { type: "single", question: "222. 因自然灾害使家庭经济遭受较大损失，导致学生经济来源发生困难的补助( )元，遭受重大自然灾害的学生临时困难补助另行酌情处理。", options: ["A.400-600", "B.300-500", "C.200-400", "D.500-700"], answer: "B" },
+                { type: "single", question: "223. 非本人原因致使个人财物遭受较大损失而影响基本生活的补助( )元。", options: ["A.400-600", "B.300-500", "C.200-400", "D.500-800"], answer: "D" },
+                { type: "multiple", question: "224. 下面哪几项符合家庭经济特别困难（A类）的认定依据?( )", options: ["A.低保家庭学生、特困供养学生、孤儿、烈士子女残疾学生、低保边缘家庭学生等，家庭无直接经济来源政府救济", "B.父母均丧失劳动能力或父母双方下岗(失业)，无兄弟姐妹或有兄弟姐妹，但无力供养，家庭无直接经济来源的学生", "C.低收入农户家庭学生", "D.实际月均生活费低于湖州市城镇最低生活保障标准的学生"], answer: ["A","B","D"] },
+                { type: "multiple", question: "225. 勤工助学岗位内容有( )？", options: ["A.助管岗位", "B.助学岗位", "C.助研岗位", "D.助工岗位"], answer: ["A","C","D"] },
+                { type: "multiple", question: "226. 申请国家助学贷款者必须具备以哪些下条件？( )", options: ["A.学习刻苦，能够正常完成学业", "B.由于家庭改善性建房、购房、购车或投资等原因造成家庭经济暂时困难的", "C.购买使用奢侈品或其他与其家庭经济困难状况不相符的高消费行为的", "D.因家庭经济困难，在校期间所能获得的收入不足以付完成学业所需基本费用"], answer: ["A","D"] },
+                { type: "multiple", question: "227. 哪些条件可以申请湖州学院学生临时困难补助？( )", options: ["A.学生本人遭遇意外身体伤害事故或突发急重病症院，所需治疗费用较大，个人负担部分超出学生及其家庭支付能力的", "B.学生供养人发生意外身体伤害事故、重大疾病、突然亡故等使家庭经济遭受重大损失，致使学生经济来源发生困难的", "C.平时生活铺张浪费，有抽烟、酗酒、购买或使用档消费品等与家庭经济困难状况不相符的行为", "D.休学"], answer: ["A","B"] },
+                { type: "single", question: "228. 对扰乱考场纪律、冲击考场秩序的学生，按情节轻重给予警告、严重警告、记过、( )、开除学籍处分。", options: ["A.留校察看", "B.退学", "C.劝退", "D.批评教育"], answer: "A" },
+                { type: "single", question: "229. 学生在考试中交卷中偷看别人答案并涂改答案，按情节轻重给予( )处分；考生涉嫌考试作弊，拒不配合监考教师处理，故意纠缠、谩骂，按情节轻重给予( )处分。", options: ["A.给予记过或留校察看处分；给予留校察看或开除学籍处分", "B.给予严重警告或记过处分；给予记过或留校察看处分", "C.给予警告和严重警告处分；给予严重警告或记过处分", "D.给予严重警告或记过处分；给予留校察看或开除学籍处分"], answer: "A" }
+            ]
+        };
+
+        // 全局变量
+        let currentQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let markedQuestions = [];
+        let examTimer = null;
+        let examMode = "";
+        let currentModule = "";
+        let timeRemaining = 60 * 60;
+        let answerChecked = false;
+        let currentExamId = null;
+
+        // 页面导航
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.classList.add('hidden'));
+            document.getElementById(pageId).classList.remove('hidden');
+            
+            if (pageId === 'errorPage') loadErrorList();
+            else if (pageId === 'recordPage') loadRecordList();
+            else if (pageId === 'homePage') resetExam();
+        }
+
+        // 开始模拟考试
+        function startExam() {
+            // 从所有题目中分离单选题和多选题
+            const allQuestions = Object.values(questionBank).flat();
+            const singleChoiceQuestions = allQuestions.filter(q => q.type === "single");
+            const multipleChoiceQuestions = allQuestions.filter(q => q.type === "multiple");
+    
+            // 随机抽取80道单选题和20道多选题
+            const selectedSingle = getRandomQuestions(singleChoiceQuestions, 80);
+            const selectedMultiple = getRandomQuestions(multipleChoiceQuestions, 20);
+    
+            // 合并题目
+            currentQuestions = [...selectedSingle, ...selectedMultiple];
+    
+            examMode = 'mock';
+            currentExamId = Date.now().toString();
+            initExam();
+            showPage('examPage');
+        }
+        // 开始模块练习
+        function startModulePractice(module) {
+            currentModule = module;
+            currentQuestions = [...questionBank[module]];
+            examMode = 'module';
+            currentExamId = Date.now().toString();
+            initExam();
+            showPage('examPage');
+        }
+
+        // 初始化考试
+        function initExam() {
+            currentQuestionIndex = 0;
+            userAnswers = new Array(currentQuestions.length).fill(null);
+            markedQuestions = [];
+            answerChecked = false;
+            
+            if (examMode !== 'module') {
+                timeRemaining = 60 * 60;
+                startTimer();
+            } else {
+                document.getElementById('timer').textContent = '模块练习';
+            }
+            
+            document.getElementById('checkBtn').classList.toggle('hidden', examMode !== 'module');
+            displayQuestion();
+        }
+
+        // 显示当前题目
+        function displayQuestion() {
+            if (currentQuestions.length === 0) return;
+            
+            const question = currentQuestions[currentQuestionIndex];
+            document.getElementById('question').textContent = question.question;
+            
+            const optionsContainer = document.getElementById('options');
+            optionsContainer.innerHTML = '';
+            
+            document.getElementById('feedback').classList.add('hidden');
+            document.getElementById('timer').textContent = examMode !== 'module' ? 
+                formatTime(timeRemaining) : `${currentQuestionIndex + 1}/${currentQuestions.length}`;
+            
+            answerChecked = false;
+            
+            question.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option';
+                
+                const input = document.createElement('input');
+                input.type = question.type === 'single' ? 'radio' : 'checkbox';
+                input.name = 'option';
+                input.value = String.fromCharCode(65 + index);
+                input.id = `option-${index}`;
+                
+                if (userAnswers[currentQuestionIndex]) {
+                    if (question.type === 'single') {
+                        input.checked = userAnswers[currentQuestionIndex] === input.value;
+                    } else {
+                        input.checked = userAnswers[currentQuestionIndex].includes(input.value);
+                    }
+                    
+                    if (input.checked) optionElement.classList.add('selected');
+                }
+                
+                optionElement.addEventListener('click', () => {
+                    if (answerChecked) return;
+                    
+                    if (question.type === 'single') {
+                        document.querySelectorAll('.option').forEach(opt => {
+                            opt.classList.remove('selected');
+                            opt.querySelector('input').checked = false;
+                        });
+                        
+                        optionElement.classList.add('selected');
+                        input.checked = true;
+                        userAnswers[currentQuestionIndex] = input.value;
+                        
+                        if (examMode === 'module' && question.type === 'single') checkAnswer();
+                    } else {
+                        optionElement.classList.toggle('selected');
+                        input.checked = !input.checked;
+                        
+                        const selectedOptions = [];
+                        document.querySelectorAll('.option input:checked').forEach(checkedInput => {
+                            selectedOptions.push(checkedInput.value);
+                        });
+                        
+                        userAnswers[currentQuestionIndex] = selectedOptions.sort().join('');
+                    }
+                });
+                
+                const label = document.createElement('label');
+                label.className = 'option-label';
+                label.textContent = option;
+                label.htmlFor = `option-${index}`;
+                
+                optionElement.appendChild(input);
+                optionElement.appendChild(label);
+                optionsContainer.appendChild(optionElement);
+            });
+            
+            const markBtn = document.getElementById('markBtn');
+            if (markedQuestions.includes(currentQuestionIndex)) {
+                markBtn.classList.add('marked');
+                markBtn.textContent = '取消标记';
+            } else {
+                markBtn.classList.remove('marked');
+                markBtn.textContent = '标记此题';
+            }
+        }
+
+        // 检查答案并显示反馈
+        function checkAnswer() {
+            if (examMode !== 'module') return;
+            
+            const question = currentQuestions[currentQuestionIndex];
+            const userAnswer = userAnswers[currentQuestionIndex];
+            const correctAnswer = question.answer;
+            
+            answerChecked = true;
+            document.getElementById('feedback').classList.add('hidden');
+            
+            document.querySelectorAll('.option').forEach(option => {
+                option.classList.remove('correct-answer', 'wrong-answer');
+            });
+            
+            const correctAnswerArray = Array.isArray(correctAnswer) ? correctAnswer : [correctAnswer];
+            document.querySelectorAll('.option').forEach((option, index) => {
+                const optionValue = String.fromCharCode(65 + index);
+                if (correctAnswerArray.includes(optionValue)) option.classList.add('correct-answer');
+            });
+            
+            if (userAnswer) {
+                const userAnswerArray = userAnswer.split('');
+                document.querySelectorAll('.option').forEach((option, index) => {
+                    const optionValue = String.fromCharCode(65 + index);
+                    if (userAnswerArray.includes(optionValue) && !correctAnswerArray.includes(optionValue)) {
+                        option.classList.add('wrong-answer');
+                    }
+                });
+            }
+            
+            const feedbackElement = document.getElementById('feedback');
+            feedbackElement.classList.remove('hidden');
+            
+            let isCorrect = false;
+            if (question.type === 'single') {
+                isCorrect = userAnswer === correctAnswer;
+            } else {
+                const userAnswerArray = userAnswer ? userAnswer.split('').sort() : [];
+                const correctAnswerArray = Array.isArray(correctAnswer) ? [...correctAnswer].sort() : [correctAnswer];
+                isCorrect = arraysEqual(userAnswerArray, correctAnswerArray);
+            }
+            
+            if (isCorrect) {
+                feedbackElement.className = 'feedback correct';
+                feedbackElement.innerHTML = '<span>✓ 回答正确</span>';
+            } else {
+                feedbackElement.className = 'feedback wrong';
+                feedbackElement.innerHTML = `<span>✗ 回答错误</span><div class="correct-answer-text">正确答案: ${formatAnswer(correctAnswer)}</div>`;
+            }
+        }
+
+        // 比较两个数组是否相等
+        function arraysEqual(arr1, arr2) {
+            if (arr1.length !== arr2.length) return false;
+            const sorted1 = [...arr1].sort();
+            const sorted2 = [...arr2].sort();
+            return sorted1.every((value, index) => value === sorted2[index]);
+        }
+
+        // 标记题目
+        function toggleMark() {
+            if (markedQuestions.includes(currentQuestionIndex)) {
+                markedQuestions = markedQuestions.filter(idx => idx !== currentQuestionIndex);
+            } else {
+                markedQuestions.push(currentQuestionIndex);
+            }
+            displayQuestion();
+        }
+
+        // 上一题/下一题
+        function prevQuestion() { if (currentQuestionIndex > 0) { currentQuestionIndex--; displayQuestion(); } }
+        function nextQuestion() { if (currentQuestionIndex < currentQuestions.length - 1) { currentQuestionIndex++; displayQuestion(); } }
+
+        // 开始计时器
+        function startTimer() {
+            clearInterval(examTimer);
+            examTimer = setInterval(() => {
+                timeRemaining--;
+                document.getElementById('timer').textContent = formatTime(timeRemaining);
+                if (timeRemaining <= 0) submitExam();
+            }, 1000);
+        }
+
+        // 格式化时间
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // 提交试卷
+        function submitExam() {
+            clearInterval(examTimer);
+            
+            let correctCount = 0;
+            let wrongCount = 0;
+            let unansweredCount = 0;
+            
+            currentQuestions.forEach((question, index) => {
+                const userAnswer = userAnswers[index];
+                const correctAnswer = question.answer;
+                
+                if (!userAnswer) {
+                    unansweredCount++;
+                } else if (question.type === 'single') {
+                    if (userAnswer === correctAnswer) correctCount++; else wrongCount++;
+                } else {
+                    const userAnswerArray = userAnswer.split('').sort();
+                    const correctAnswerArray = Array.isArray(correctAnswer) ? [...correctAnswer].sort() : [correctAnswer];
+                    if (arraysEqual(userAnswerArray, correctAnswerArray)) correctCount++; else wrongCount++;
+                }
+            });
+            
+            if (examMode !== 'module') saveExamRecord(correctCount, currentQuestions.length);
+            saveErrorQuestions(correctCount);
+            showResult(correctCount, wrongCount, unansweredCount);
+        }
+
+        // 显示考试结果
+        function showResult(correctCount, wrongCount, unansweredCount) {
+            const total = currentQuestions.length;
+            const rate = Math.round((correctCount / total) * 100);
+            
+            document.getElementById('score').textContent = `${correctCount}/${total}`;
+            document.getElementById('correctRate').textContent = `正确率: ${rate}%`;
+            document.getElementById('correctCount').textContent = correctCount;
+            document.getElementById('wrongCount').textContent = wrongCount;
+            document.getElementById('unansweredCount').textContent = unansweredCount;
+            
+            document.getElementById('resultTitle').textContent = examMode !== 'module' ? '模拟考试结果' : `${currentModule}练习结果`;
+            
+            if (examMode !== 'module') {
+                const elapsedMinutes = 60 - Math.floor(timeRemaining / 60);
+                document.getElementById('timeUsed').textContent = `用时: ${elapsedMinutes}分钟`;
+            } else {
+                document.getElementById('timeUsed').textContent = '模块练习不计时';
+            }
+            
+            showPage('resultPage');
+        }
+
+        // 保存成绩记录
+        function saveExamRecord(score, total) {
+            const records = JSON.parse(localStorage.getItem('examRecords') || '[]');
+            records.unshift({ date: new Date().toLocaleString(), score: score, total: total });
+            localStorage.setItem('examRecords', JSON.stringify(records));
+        }
+
+        // 保存错题
+        function saveErrorQuestions() {
+            const errorQuestions = [];
+            
+            currentQuestions.forEach((question, index) => {
+                const userAnswer = userAnswers[index];
+                const correctAnswer = question.answer;
+                
+                let isCorrect = false;
+                if (question.type === 'single') {
+                    isCorrect = userAnswer === correctAnswer;
+                } else {
+                    const userAnswerArray = userAnswer ? userAnswer.split('').sort() : [];
+                    const correctAnswerArray = Array.isArray(correctAnswer) ? [...correctAnswer].sort() : [correctAnswer];
+                    isCorrect = arraysEqual(userAnswerArray, correctAnswerArray);
+                }
+                
+                if (!isCorrect) {
+                    errorQuestions.push({
+                        question: question.question,
+                        options: question.options,
+                        userAnswer: userAnswer,
+                        correctAnswer: correctAnswer,
+                        module: examMode !== 'module' ? '模考' : currentModule,
+                        type: question.type,
+                        examId: currentExamId,
+                        examDate: new Date().toLocaleString()
+                    });
+                }
+            });
+            
+            if (errorQuestions.length > 0) {
+                const examErrors = {
+                    examId: currentExamId,
+                    examType: examMode !== 'module' ? '模拟考试' : `${currentModule}模块练习`,
+                    examDate: new Date().toLocaleString(),
+                    errorCount: errorQuestions.length,
+                    errors: errorQuestions
+                };
+                
+                const existingExams = JSON.parse(localStorage.getItem('examErrors') || '[]');
+                existingExams.unshift(examErrors);
+                if (existingExams.length > 10) existingExams.splice(10);
+                localStorage.setItem('examErrors', JSON.stringify(existingExams));
+            }
+        }
+
+        // 重新开始考试
+        function restartExam() {
+            if (examMode !== 'module') startExam(); else startModulePractice(currentModule);
+        }
+
+        // 查看错题
+        function reviewErrors() { showPage('errorPage'); }
+
+        // 加载错题列表
+        function loadErrorList() {
+            const errorList = document.getElementById('errorList');
+            errorList.innerHTML = '';
+            
+            const examErrors = JSON.parse(localStorage.getItem('examErrors') || '[]');
+            
+            if (examErrors.length === 0) {
+                errorList.innerHTML = '<p style="text-align:center; color:#666; margin:20px;">暂无错题记录</p>';
+                return;
+            }
+            
+            examErrors.forEach((exam, examIndex) => {
+                const examTitle = document.createElement('div');
+                examTitle.style.cssText = 'font-size: 1.2rem; font-weight: bold; color: #1e3c72; margin: 20px 0 10px 0; padding-bottom: 10px; border-bottom: 2px solid #f0f0f0;';
+                examTitle.textContent = `${exam.examType} - ${exam.examDate} (${exam.errorCount}道错题)`;
+                errorList.appendChild(examTitle);
+                
+                const removeExamBtn = document.createElement('button');
+                removeExamBtn.className = 'btn btn-small btn-danger';
+                removeExamBtn.textContent = '移除此考试错题';
+                removeExamBtn.style.marginBottom = '15px';
+                removeExamBtn.onclick = () => removeExamErrors(examIndex);
+                errorList.appendChild(removeExamBtn);
+                
+                exam.errors.forEach((error, errorIndex) => {
+                    const errorItem = document.createElement('div');
+                    errorItem.className = 'error-item';
+                    
+                    const moduleDiv = document.createElement('div');
+                    moduleDiv.style.cssText = 'font-size: 0.9rem; color: #666; margin-bottom: 10px;';
+                    moduleDiv.textContent = `模块: ${error.module} | 题型: ${error.type === 'single' ? '单选题' : '多选题'}`;
+                    errorItem.appendChild(moduleDiv);
+                    
+                    const questionDiv = document.createElement('div');
+                    questionDiv.className = 'error-question';
+                    questionDiv.textContent = error.question;
+                    errorItem.appendChild(questionDiv);
+                    
+                    const optionsDiv = document.createElement('div');
+                    optionsDiv.style.margin = '10px 0';
+                    error.options.forEach(option => {
+                        const optionDiv = document.createElement('div');
+                        optionDiv.textContent = option;
+                        optionsDiv.appendChild(optionDiv);
+                    });
+                    errorItem.appendChild(optionsDiv);
+                    
+                    const userAnswerDiv = document.createElement('div');
+                    userAnswerDiv.className = 'error-answer';
+                    userAnswerDiv.innerHTML = `<strong>你的答案:</strong> ${formatAnswer(error.userAnswer)}`;
+                    errorItem.appendChild(userAnswerDiv);
+                    
+                    const correctAnswerDiv = document.createElement('div');
+                    correctAnswerDiv.className = 'correct-answer';
+                    correctAnswerDiv.innerHTML = `<strong>正确答案:</strong> ${formatAnswer(error.correctAnswer)}`;
+                    errorItem.appendChild(correctAnswerDiv);
+                    
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'btn btn-small btn-danger';
+                    removeBtn.textContent = '移出错题本';
+                    removeBtn.onclick = () => removeErrorQuestion(examIndex, errorIndex);
+                    errorItem.appendChild(removeBtn);
+                    
+                    errorList.appendChild(errorItem);
+                });
+            });
+        }
+
+        // 格式化答案
+        function formatAnswer(answer) {
+            if (!answer) return '未作答';
+            if (Array.isArray(answer)) return answer.join('、');
+            return answer.split('').join('、');
+        }
+
+        // 移除单个错题
+        function removeErrorQuestion(examIndex, errorIndex) {
+            const examErrors = JSON.parse(localStorage.getItem('examErrors') || '[]');
+            if (examErrors[examIndex] && examErrors[examIndex].errors) {
+                examErrors[examIndex].errors.splice(errorIndex, 1);
+                examErrors[examIndex].errorCount = examErrors[examIndex].errors.length;
+                
+                if (examErrors[examIndex].errors.length === 0) examErrors.splice(examIndex, 1);
+                
+                localStorage.setItem('examErrors', JSON.stringify(examErrors));
+                loadErrorList();
+            }
+        }
+
+        // 移除整个考试的错题
+        function removeExamErrors(examIndex) {
+            const examErrors = JSON.parse(localStorage.getItem('examErrors') || '[]');
+            examErrors.splice(examIndex, 1);
+            localStorage.setItem('examErrors', JSON.stringify(examErrors));
+            loadErrorList();
+        }
+
+        // 加载成绩记录
+        function loadRecordList() {
+            const recordList = document.getElementById('recordList');
+            recordList.innerHTML = '';
+            
+            const records = JSON.parse(localStorage.getItem('examRecords') || '[]');
+            
+            if (records.length === 0) {
+                recordList.innerHTML = '<p style="text-align:center; color:#666; margin:20px;">暂无成绩记录</p>';
+                return;
+            }
+            
+            records.forEach(record => {
+                const recordItem = document.createElement('div');
+                recordItem.className = 'record-item';
+                
+                const timeDiv = document.createElement('div');
+                timeDiv.className = 'record-date';
+                timeDiv.textContent = record.date;
+                
+                const scoreDiv = document.createElement('div');
+                scoreDiv.className = 'record-score';
+                scoreDiv.textContent = `${record.score}/${record.total}`;
+                
+                recordItem.appendChild(timeDiv);
+                recordItem.appendChild(scoreDiv);
+                recordList.appendChild(recordItem);
+            });
+        }
+
+        // 重置考试状态
+        function resetExam() {
+            currentQuestions = [];
+            currentQuestionIndex = 0;
+            userAnswers = [];
+            markedQuestions = [];
+            clearInterval(examTimer);
+            examMode = "";
+            currentModule = "";
+            timeRemaining = 60 * 60;
+            answerChecked = false;
+            currentExamId = null;
+        }
+
+        // 获取随机题目
+        function getRandomQuestions(questions, count) {
+            const shuffled = [...questions].sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, count);
+        }
+
+        // 初始化页面
+        window.onload = function() { showPage('homePage'); };
+    </script>
+</body>
+</html>
